@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ระบบบริหารจัดการร้าน (Admin){% endblock %} - E-Book Store</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-light">
+
+    <!-- Top Admin Bar -->
+    <header class="navbar navbar-dark bg-dark sticky-top p-2 shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center gap-2 px-2" href="{{ url_for('admin_dashboard') }}">
+                <i class="bi bi-shield-lock-fill text-danger fs-4"></i>
+                <span class="fw-bold">E-Book Store</span>
+                <span class="badge bg-danger rounded-pill font-monospace" style="font-size: 0.7rem;">ADMIN PANEL</span>
+            </a>
+            
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('index') }}" class="btn btn-outline-light btn-sm rounded-pill" target="_blank">
+                    <i class="bi bi-box-arrow-up-right me-1"></i>ดูหน้าร้าน (Storefront)
+                </a>
+                <div class="dropdown">
+                    <button class="btn btn-dark dropdown-toggle btn-sm d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle text-info"></i>
+                        <span>{{ current_user.full_name }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person me-2"></i>โปรไฟล์</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}"><i class="bi bi-box-arrow-right me-2"></i>ออกจากระบบ</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block admin-sidebar collapse show p-3" id="sidebarMenu">
+                <div class="position-sticky pt-2">
+                    <div class="text-uppercase small fw-bold px-3 py-2 text-muted" style="letter-spacing: 1px;">เมนูบริหารจัดการ</div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.path == url_for('admin_dashboard') %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">
+                                <i class="bi bi-speedometer2 me-2"></i> แดชบอร์ดภาพรวม
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/admin/orders' in request.path %}active{% endif %}" href="{{ url_for('admin_orders') }}">
+                                <i class="bi bi-receipt-cutoff me-2"></i> จัดการคำสั่งซื้อ & สลิป
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/admin/ebooks' in request.path %}active{% endif %}" href="{{ url_for('admin_ebooks') }}">
+                                <i class="bi bi-book me-2"></i> จัดการ E-Book
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/admin/categories' in request.path %}active{% endif %}" href="{{ url_for('admin_categories') }}">
+                                <i class="bi bi-tags me-2"></i> จัดการหมวดหมู่
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/admin/users' in request.path %}active{% endif %}" href="{{ url_for('admin_users') }}">
+                                <i class="bi bi-people me-2"></i> จัดการผู้ใช้งาน
+                            </a>
+                        </li>
+                        
+                        <div class="text-uppercase small fw-bold px-3 py-2 mt-3 text-muted" style="letter-spacing: 1px;">รายงานวิเคราะห์</div>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/admin/reports' in request.path %}active{% endif %}" href="{{ url_for('admin_reports') }}">
+                                <i class="bi bi-graph-up-arrow me-2 text-warning"></i> รายงานวิเคราะห์ 4 รายงาน
+                            </a>
+                        </li>
+                    </ul>
+
+                    <hr class="text-secondary my-4">
+                    <div class="px-3 text-muted small">
+                        <div>Database Mini Project</div>
+                        <small>SQLite3 Relational DB (3NF)</small>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Admin Content Area -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block admin_content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

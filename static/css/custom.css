@@ -1,0 +1,166 @@
+/* Custom styles for E-Book Store Mini Project */
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --secondary-color: #0d9488;
+    --accent-color: #f59e0b;
+    --dark-bg: #0f172a;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --card-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: 'Prompt', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: #f8fafc;
+    color: #334155;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1 0 auto;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.35rem;
+    letter-spacing: -0.5px;
+}
+
+.navbar {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Book Cards */
+.book-card {
+    transition: all 0.25s ease-in-out;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+    border-color: #cbd5e1;
+}
+
+.book-cover-img {
+    height: 240px;
+    object-fit: cover;
+    width: 100%;
+    background-color: #f1f5f9;
+}
+
+.badge-category {
+    background-color: #e0e7ff;
+    color: #3730a3;
+    font-weight: 500;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 20px;
+}
+
+.price-tag {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #2563eb;
+}
+
+/* Hero Section */
+.hero-banner {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    color: #ffffff;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Category Filter Pills */
+.category-pill {
+    display: inline-block;
+    padding: 0.45rem 1rem;
+    margin: 0.25rem;
+    border-radius: 30px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    color: #475569;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.category-pill:hover, .category-pill.active {
+    background-color: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+}
+
+/* Status Badges */
+.badge-status-confirmed {
+    background-color: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-status-pending {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
+.badge-status-cancelled {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* Admin Sidebar */
+.admin-sidebar {
+    background-color: #1e293b;
+    min-height: 100vh;
+    color: #94a3b8;
+}
+
+.admin-sidebar .nav-link {
+    color: #cbd5e1;
+    font-weight: 400;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    margin: 0.2rem 0.5rem;
+    transition: all 0.2s;
+}
+
+.admin-sidebar .nav-link:hover, .admin-sidebar .nav-link.active {
+    background-color: #334155;
+    color: #ffffff;
+}
+
+.admin-sidebar .nav-link.active {
+    background-color: #2563eb;
+}
+
+.stat-card {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Footer */
+footer {
+    background-color: #ffffff;
+    border-top: 1px solid #e2e8f0;
+}

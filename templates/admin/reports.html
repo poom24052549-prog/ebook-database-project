@@ -1,0 +1,434 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}รายงานวิเคราะห์ข้อมูลจริง (4 Reports) - ผู้ดูแลระบบ{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">รายงานวิเคราะห์จากข้อมูลจริงในระบบ (Analytical Reports)</h2>
+        <p class="text-muted small mb-0">รายงานครบถ้วนทั้ง 4 หัวข้อตามข้อกำหนดรายวิชา อ้างอิงคำสั่ง SQL เชิงวิเคราะห์ (JOIN, GROUP BY, HAVING, AGGREGATE)</p>
+    </div>
+</div>
+
+<!-- Navigation Tabs for 4 Reports -->
+<ul class="nav nav-pills mb-4 gap-2" id="reportTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active rounded-pill px-4" id="r1-tab" data-bs-toggle="pill" data-bs-target="#report1" type="button" role="tab">
+            <i class="bi bi-calendar3 me-1"></i> 1. ยอดขายตามช่วงเวลา
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link rounded-pill px-4" id="r2-tab" data-bs-toggle="pill" data-bs-target="#report2" type="button" role="tab">
+            <i class="bi bi-trophy me-1"></i> 2. E-Book ขายดี
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link rounded-pill px-4" id="r3-tab" data-bs-toggle="pill" data-bs-target="#report3" type="button" role="tab">
+            <i class="bi bi-pie-chart me-1"></i> 3. ยอดขายตามหมวดหมู่
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link rounded-pill px-4" id="r4-tab" data-bs-toggle="pill" data-bs-target="#report4" type="button" role="tab">
+            <i class="bi bi-people me-1"></i> 4. ลูกค้าและคำสั่งซื้อ
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="reportTabsContent">
+
+    <!-- REPORT 1: SALES BY TIME PERIOD -->
+    <div class="tab-pane fade show active" id="report1" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1">รายงานที่ 1: ยอดขายตามช่วงเวลา (Sales by Time Period)</h4>
+                    <span class="text-muted small">คำถาม: ยอดขาย จำนวนคำสั่งซื้อ และค่าเฉลี่ยต่อคำสั่งซื้อ เปลี่ยนไปอย่างไรตามวันที่หรือเดือน</span>
+                </div>
+                <a href="{{ url_for('export_report_csv', report_id=1) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i>ส่งออก CSV (Excel)
+                </a>
+            </div>
+
+            <!-- SQL Query Reference Box -->
+            <div class="p-3 bg-light rounded-3 mb-4 font-monospace small border">
+                <div class="text-secondary fw-bold mb-1"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                <span class="text-primary">SELECT</span> strftime('%Y-%m', o.order_date) AS period_month, 
+                <span class="text-primary">COUNT</span>(o.order_id) AS total_orders, 
+                <span class="text-primary">ROUND</span>(<span class="text-primary">SUM</span>(o.total_amount), 2) AS total_sales, 
+                <span class="text-primary">ROUND</span>(<span class="text-primary">AVG</span>(o.total_amount), 2) AS average_order_value<br>
+                <span class="text-primary">FROM</span> orders o <span class="text-primary">JOIN</span> payments p <span class="text-primary">ON</span> o.order_id = p.order_id<br>
+                <span class="text-primary">WHERE</span> o.status = 'CONFIRMED' <span class="text-primary">GROUP BY</span> strftime('%Y-%m', o.order_date) <span class="text-primary">ORDER BY</span> period_month ASC;
+            </div>
+
+            <!-- Chart -->
+            <div class="mb-4" style="height: 260px;">
+                <canvas id="r1Chart"></canvas>
+            </div>
+
+            <!-- Table Monthly -->
+            <h6 class="fw-bold text-dark mb-2">สรุปรายเดือน (Monthly Summary)</h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>งวดเดือน (Month)</th>
+                            <th class="text-center">จำนวนคำสั่งซื้อ</th>
+                            <th class="text-end">ยอดขายรวม</th>
+                            <th class="text-end">ค่าเฉลี่ยต่อคำสั่งซื้อ (AOV)</th>
+                            <th class="text-end">ยอดต่ำสุด</th>
+                            <th class="text-end">ยอดสูงสุด</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in report1_monthly %}
+                        <tr>
+                            <td class="fw-bold font-monospace">{{ r.period_month }}</td>
+                            <td class="text-center">{{ r.total_orders }} ออเดอร์</td>
+                            <td class="text-end fw-bold text-primary">฿{{ "%.2f"|format(r.total_sales) }}</td>
+                            <td class="text-end">฿{{ "%.2f"|format(r.average_order_value) }}</td>
+                            <td class="text-end text-muted">฿{{ "%.2f"|format(r.min_order_value) }}</td>
+                            <td class="text-end text-muted">฿{{ "%.2f"|format(r.max_order_value) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Table Daily (Recent) -->
+            <h6 class="fw-bold text-dark mb-2">เจาะลึกยอดขายรายวันล่าสุด (Daily Breakdown)</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>วันที่ (Date)</th>
+                            <th class="text-center">จำนวนคำสั่งซื้อ</th>
+                            <th class="text-end">ยอดขายรวม</th>
+                            <th class="text-end">ค่าเฉลี่ยต่อบิล</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in report1_daily %}
+                        <tr>
+                            <td class="font-monospace">{{ r.sale_date }}</td>
+                            <td class="text-center">{{ r.daily_orders }} รายการ</td>
+                            <td class="text-end fw-bold text-primary">฿{{ "%.2f"|format(r.daily_sales) }}</td>
+                            <td class="text-end">฿{{ "%.2f"|format(r.daily_avg_order) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT 2: BEST SELLING E-BOOKS -->
+    <div class="tab-pane fade" id="report2" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1">รายงานที่ 2: จัดอันดับ E-Book ขายดี (Top Selling E-Books)</h4>
+                    <span class="text-muted small">คำถาม: E-Book ใดขายได้มากที่สุดตามจำนวนเล่มหรือยอดขาย</span>
+                </div>
+                <a href="{{ url_for('export_report_csv', report_id=2) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i>ส่งออก CSV (Excel)
+                </a>
+            </div>
+
+            <!-- SQL Query Reference Box -->
+            <div class="p-3 bg-light rounded-3 mb-4 font-monospace small border">
+                <div class="text-secondary fw-bold mb-1"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                <span class="text-primary">SELECT</span> b.ebook_id, b.title, c.category_name, a.author_name, b.price, 
+                <span class="text-primary">SUM</span>(oi.quantity) AS total_copies_sold, 
+                <span class="text-primary">ROUND</span>(<span class="text-primary">SUM</span>(oi.subtotal), 2) AS total_revenue<br>
+                <span class="text-primary">FROM</span> order_items oi 
+                <span class="text-primary">JOIN</span> orders o <span class="text-primary">ON</span> oi.order_id = o.order_id 
+                <span class="text-primary">JOIN</span> ebooks b <span class="text-primary">ON</span> oi.ebook_id = b.ebook_id<br>
+                <span class="text-primary">WHERE</span> o.status = 'CONFIRMED' <span class="text-primary">GROUP BY</span> b.ebook_id <span class="text-primary">ORDER BY</span> total_copies_sold <span class="text-primary">DESC LIMIT</span> 10;
+            </div>
+
+            <!-- Chart -->
+            <div class="mb-4" style="height: 280px;">
+                <canvas id="r2Chart"></canvas>
+            </div>
+
+            <!-- Table -->
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 70px;">อันดับ</th>
+                            <th>ชื่อหนังสือ E-Book</th>
+                            <th>หมวดหมู่</th>
+                            <th>ผู้แต่ง</th>
+                            <th class="text-end">ราคา</th>
+                            <th class="text-center">จำนวนเล่มที่ขายได้</th>
+                            <th class="text-end">รายได้รวม</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for b in report2_top_ebooks %}
+                        <tr>
+                            <td class="text-center">
+                                {% if loop.index == 1 %}<span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-trophy-fill"></i> 1</span>
+                                {% elif loop.index == 2 %}<span class="badge bg-secondary px-2 py-1">2</span>
+                                {% elif loop.index == 3 %}<span class="badge bg-danger-subtle text-danger px-2 py-1">3</span>
+                                {% else %}<span class="text-muted fw-bold">{{ loop.index }}</span>{% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('ebook_detail', ebook_id=b.ebook_id) }}" target="_blank" class="fw-bold text-dark text-decoration-none">
+                                    {{ b.title }}
+                                </a>
+                            </td>
+                            <td><span class="badge bg-light text-dark border">{{ b.category_name }}</span></td>
+                            <td class="text-muted small">{{ b.author_name }}</td>
+                            <td class="text-end">฿{{ "%.2f"|format(b.current_price) }}</td>
+                            <td class="text-center fw-bold text-success">{{ b.total_copies_sold }} เล่ม</td>
+                            <td class="text-end fw-bold text-primary">฿{{ "%.2f"|format(b.total_revenue) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT 3: SALES BY CATEGORY -->
+    <div class="tab-pane fade" id="report3" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1">รายงานที่ 3: ยอดขายตามหมวดหมู่ (Sales by Category)</h4>
+                    <span class="text-muted small">คำถาม: หมวดหมู่ใดสร้างยอดขายและจำนวนรายการสูงสุด</span>
+                </div>
+                <a href="{{ url_for('export_report_csv', report_id=3) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i>ส่งออก CSV (Excel)
+                </a>
+            </div>
+
+            <!-- SQL Query Reference Box -->
+            <div class="p-3 bg-light rounded-3 mb-4 font-monospace small border">
+                <div class="text-secondary fw-bold mb-1"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                <span class="text-primary">SELECT</span> c.category_id, c.category_name, 
+                <span class="text-primary">COUNT</span>(<span class="text-primary">DISTINCT</span> o.order_id) AS total_orders, 
+                <span class="text-primary">SUM</span>(oi.quantity) AS total_items_sold, 
+                <span class="text-primary">ROUND</span>(<span class="text-primary">SUM</span>(oi.subtotal), 2) AS category_revenue,<br>
+                <span class="text-primary">ROUND</span>(<span class="text-primary">SUM</span>(oi.subtotal) * 100.0 / (<span class="text-primary">SELECT SUM</span>(subtotal) <span class="text-primary">FROM</span> order_items oi2 <span class="text-primary">JOIN</span> orders o2 <span class="text-primary">ON</span> oi2.order_id = o2.order_id <span class="text-primary">WHERE</span> o2.status = 'CONFIRMED'), 2) AS revenue_share_percent<br>
+                <span class="text-primary">FROM</span> categories c <span class="text-primary">JOIN</span> ebooks b <span class="text-primary">ON</span> c.category_id = b.category_id 
+                <span class="text-primary">JOIN</span> order_items oi <span class="text-primary">ON</span> b.ebook_id = oi.ebook_id 
+                <span class="text-primary">JOIN</span> orders o <span class="text-primary">ON</span> oi.order_id = o.order_id<br>
+                <span class="text-primary">WHERE</span> o.status = 'CONFIRMED' <span class="text-primary">GROUP BY</span> c.category_id, c.category_name <span class="text-primary">ORDER BY</span> category_revenue <span class="text-primary">DESC</span>;
+            </div>
+
+            <div class="row align-items-center mb-4">
+                <div class="col-md-5">
+                    <div style="height: 250px;">
+                        <canvas id="r3Chart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ชื่อหมวดหมู่</th>
+                                    <th class="text-center">ออเดอร์</th>
+                                    <th class="text-center">เล่มที่ขายได้</th>
+                                    <th class="text-end">ยอดขายรวม</th>
+                                    <th class="text-center">สัดส่วน (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in report3_categories %}
+                                <tr>
+                                    <td class="fw-bold text-dark">{{ c.category_name }}</td>
+                                    <td class="text-center">{{ c.total_orders_involved }}</td>
+                                    <td class="text-center">{{ c.total_items_sold }} เล่ม</td>
+                                    <td class="text-end fw-bold text-primary">฿{{ "%.2f"|format(c.category_revenue) }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info-subtle text-info-emphasis px-2 py-1">{{ c.revenue_share_percent }}%</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT 4: CUSTOMER BEHAVIOR & ORDER STATUSES -->
+    <div class="tab-pane fade" id="report4" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h4 class="fw-bold mb-1">รายงานที่ 4: ลูกค้าและคำสั่งซื้อ (Customer Behavior & Order Status)</h4>
+                    <span class="text-muted small">คำถาม: ลูกค้ารายใดซื้อบ่อยหรือมียอดซื้อสะสมสูง และแต่ละสถานะมีจำนวนเท่าใด</span>
+                </div>
+                <a href="{{ url_for('export_report_csv', report_id=4) }}" class="btn btn-outline-success btn-sm rounded-pill px-3">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i>ส่งออก CSV (Excel)
+                </a>
+            </div>
+
+            <!-- SQL Query Reference Box -->
+            <div class="p-3 bg-light rounded-3 mb-4 font-monospace small border">
+                <div class="text-secondary fw-bold mb-1"><i class="bi bi-terminal me-1"></i>SQL Query 4A (ลูกค้าชั้นยอดพร้อม HAVING):</div>
+                <span class="text-primary">SELECT</span> u.user_id, u.username, u.full_name, u.email, 
+                <span class="text-primary">COUNT</span>(o.order_id) AS total_confirmed_orders, 
+                <span class="text-primary">ROUND</span>(<span class="text-primary">SUM</span>(o.total_amount), 2) AS total_spent<br>
+                <span class="text-primary">FROM</span> users u <span class="text-primary">JOIN</span> orders o <span class="text-primary">ON</span> u.user_id = o.user_id<br>
+                <span class="text-primary">WHERE</span> o.status = 'CONFIRMED' <span class="text-primary">GROUP BY</span> u.user_id <span class="text-primary">HAVING COUNT</span>(o.order_id) >= 1 <span class="text-primary">ORDER BY</span> total_spent <span class="text-primary">DESC</span>;
+            </div>
+
+            <!-- Table Top Customers -->
+            <h6 class="fw-bold text-dark mb-2">4A. ลูกค้าที่มียอดซื้อสะสมสูงสุด (Customer Lifetime Value)</h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width: 60px;">อันดับ</th>
+                            <th>ชื่อลูกค้า</th>
+                            <th>ชื่อผู้ใช้ (Username)</th>
+                            <th>อีเมล</th>
+                            <th class="text-center">คำสั่งซื้อยืนยันแล้ว</th>
+                            <th class="text-end">ยอดใช้จ่ายสะสม</th>
+                            <th class="text-end">เฉลี่ยต่อบิล</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in report4_customers %}
+                        <tr>
+                            <td class="text-center fw-bold">{{ loop.index }}</td>
+                            <td class="fw-bold text-dark">{{ u.full_name }}</td>
+                            <td class="font-monospace text-muted">@{{ u.username }}</td>
+                            <td>{{ u.email }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success px-2 py-1">{{ u.total_confirmed_orders }} ครั้ง</span>
+                            </td>
+                            <td class="text-end fw-bold text-primary">฿{{ "%.2f"|format(u.total_spent) }}</td>
+                            <td class="text-end text-muted">฿{{ "%.2f"|format(u.avg_order_spend) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Breakdown by Order Status -->
+            <h6 class="fw-bold text-dark mb-2">4B. สรุปสัดส่วนสถานะคำสั่งซื้อในระบบทั้งหมด</h6>
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>สถานะคำสั่งซื้อ (Order Status)</th>
+                            <th class="text-center">จำนวนคำสั่งซื้อ</th>
+                            <th class="text-end">มูลค่ารวม</th>
+                            <th class="text-end">เฉลี่ยต่อบิล</th>
+                            <th class="text-center">สัดส่วนในระบบ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in report4_status %}
+                        <tr>
+                            <td>
+                                {% if s.order_status == 'CONFIRMED' %}
+                                    <span class="badge badge-status-confirmed px-3 py-1 rounded-pill">CONFIRMED (ยืนยันแล้ว)</span>
+                                {% elif s.order_status == 'PENDING' %}
+                                    <span class="badge badge-status-pending px-3 py-1 rounded-pill">PENDING (รอตรวจสอบ)</span>
+                                {% else %}
+                                    <span class="badge badge-status-cancelled px-3 py-1 rounded-pill">CANCELLED (ยกเลิกแล้ว)</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center fw-bold">{{ s.order_count }} รายการ</td>
+                            <td class="text-end fw-bold text-primary">฿{{ "%.2f"|format(s.total_amount) }}</td>
+                            <td class="text-end">฿{{ "%.2f"|format(s.avg_amount) }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary px-2 py-1">{{ s.percentage_of_total_orders }}%</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Chart 1: Sales by Month
+const r1Labels = [{% for r in report1_monthly %}'{{ r.period_month }}',{% endfor %}];
+const r1Sales = [{% for r in report1_monthly %}{{ r.total_sales }},{% endfor %}];
+
+new Chart(document.getElementById('r1Chart'), {
+    type: 'line',
+    data: {
+        labels: r1Labels,
+        datasets: [{
+            label: 'ยอดขายรวม (บาท)',
+            data: r1Sales,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 6,
+            pointBackgroundColor: '#2563eb'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+// Chart 2: Top Selling Ebooks
+const r2Labels = [{% for b in report2_top_ebooks %}'{{ b.title[:20] }}...',{% endfor %}];
+const r2Sales = [{% for b in report2_top_ebooks %}{{ b.total_copies_sold }},{% endfor %}];
+
+new Chart(document.getElementById('r2Chart'), {
+    type: 'bar',
+    data: {
+        labels: r2Labels,
+        datasets: [{
+            label: 'จำนวนเล่มที่ขายได้',
+            data: r2Sales,
+            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+            borderColor: '#10b981',
+            borderWidth: 1.5,
+            borderRadius: 6
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+
+// Chart 3: Category Revenue Share
+const r3Labels = [{% for c in report3_categories %}'{{ c.category_name }}',{% endfor %}];
+const r3Data = [{% for c in report3_categories %}{{ c.category_revenue }},{% endfor %}];
+
+new Chart(document.getElementById('r3Chart'), {
+    type: 'pie',
+    data: {
+        labels: r3Labels,
+        datasets: [{
+            data: r3Data,
+            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'right' }
+        }
+    }
+});
+</script>
+{% endblock %}

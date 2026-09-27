@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ ebook.title }} - รายละเอียดหนังสือ{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('index') }}">หน้าร้าน</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('index', category=ebook.category_id) }}">{{ ebook.category_name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ ebook.title }}</li>
+    </ol>
+</nav>
+
+<div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-5">
+    <div class="row g-0">
+        <div class="col-md-4 text-center p-4 bg-light d-flex align-items-center justify-content-center">
+            <img src="{{ ebook.cover_url }}" alt="{{ ebook.title }}" class="img-fluid rounded-3 shadow" style="max-height: 420px; object-fit: cover;"
+                 onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80';">
+        </div>
+        <div class="col-md-8">
+            <div class="card-body p-4 p-md-5 d-flex flex-column h-100">
+                <div class="mb-2">
+                    <span class="badge-category">{{ ebook.category_name }}</span>
+                    {% if ebook.is_active == 1 %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">พร้อมจำหน่าย</span>
+                    {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">งดจำหน่ายชั่วคราว</span>
+                    {% endif %}
+                </div>
+
+                <h2 class="fw-bold text-dark mb-2">{{ ebook.title }}</h2>
+                <p class="text-muted fs-6 mb-4">
+                    <i class="bi bi-person-fill text-primary me-1"></i> ผู้แต่ง: <span class="fw-semibold text-dark">{{ ebook.author_name }}</span>
+                </p>
+
+                <div class="p-3 bg-light rounded-3 mb-4 border">
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="text-muted">ราคา:</span>
+                        <span class="fs-2 fw-bold text-primary">฿{{ "%.2f"|format(ebook.price) }}</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="fw-bold text-dark mb-2">คำอธิบาย / เรื่องย่อ</h5>
+                    <p class="text-secondary leading-relaxed" style="white-space: pre-line;">{{ ebook.description }}</p>
+                </div>
+
+                <!-- Purchase / Download Action Area -->
+                <div class="mt-auto pt-3 border-top">
+                    {% if has_purchased and download_token %}
+                    <div class="alert alert-success d-flex align-items-center justify-content-between p-3 mb-3 rounded-3">
+                        <div>
+                            <i class="bi bi-check-circle-fill text-success fs-4 me-2"></i>
+                            <span class="fw-semibold">คุณได้ซื้อหนังสือเล่มนี้แล้ว และได้รับการยืนยันเรียบร้อย</span>
+                        </div>
+                        <a href="{{ url_for('download_by_token', token=download_token) }}" class="btn btn-success px-4 py-2 rounded-pill fw-bold shadow-sm">
+                            <i class="bi bi-cloud-arrow-down-fill me-2"></i>ดาวน์โหลด E-Book (PDF)
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    {% if ebook.is_active == 1 %}
+                    <div class="d-flex gap-3">
+                        <form action="{{ url_for('add_to_cart', ebook_id=ebook.ebook_id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-primary btn-lg px-4 rounded-pill shadow-sm">
+                                <i class="bi bi-cart-plus me-2"></i>ใส่ตะกร้าสินค้า
+                            </button>
+                        </form>
+                        <a href="{{ url_for('view_cart') }}" class="btn btn-outline-secondary btn-lg px-4 rounded-pill">
+                            <i class="bi bi-bag-check me-2"></i>ดูตะกร้า
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-info-circle me-2"></i> หนังสือเล่มนี้ยังไม่เปิดให้สั่งซื้อในขณะนี้
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Books -->
+{% if related %}
+<div class="mt-5">
+    <h4 class="fw-bold mb-3"><i class="bi bi-bookmark-star-fill text-warning me-2"></i>หนังสือในหมวดหมู่เดียวกันที่คุณอาจสนใจ</h4>
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4">
+        {% for r in related %}
+        <div class="col">
+            <div class="card h-100 book-card">
+                <a href="{{ url_for('ebook_detail', ebook_id=r.ebook_id) }}">
+                    <img src="{{ r.cover_url }}" class="card-img-top book-cover-img" alt="{{ r.title }}"
+                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80';">
+                </a>
+                <div class="card-body d-flex flex-column p-3">
+                    <h6 class="card-title fw-bold text-truncate mb-1">
+                        <a href="{{ url_for('ebook_detail', ebook_id=r.ebook_id) }}" class="text-dark text-decoration-none">
+                            {{ r.title }}
+                        </a>
+                    </h6>
+                    <small class="text-muted mb-2">{{ r.author_name }}</small>
+                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-primary">฿{{ "%.2f"|format(r.price) }}</span>
+                        <a href="{{ url_for('ebook_detail', ebook_id=r.ebook_id) }}" class="btn btn-sm btn-outline-primary rounded-pill">ดูข้อมูล</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

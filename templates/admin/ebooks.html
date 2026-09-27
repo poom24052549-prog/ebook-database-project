@@ -1,0 +1,89 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}จัดการ E-Book - ผู้ดูแลระบบ{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">จัดการหนังสือ E-Book (Catalog Management)</h2>
+        <p class="text-muted small mb-0">เพิ่ม แก้ไข ปิดการขาย หรือเปิดเผยแพร่รายการ พร้อมกำหนดราคาและไฟล์ดาวน์โหลด</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('admin_ebook_add') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+            <i class="bi bi-plus-circle me-1"></i>เพิ่ม E-Book เล่มใหม่
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ปก</th>
+                    <th>ชื่อหนังสือ</th>
+                    <th>ผู้แต่ง</th>
+                    <th>หมวดหมู่</th>
+                    <th>ราคา</th>
+                    <th class="text-center">ยอดขาย</th>
+                    <th class="text-center">สถานะจำหน่าย</th>
+                    <th class="text-end">การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for b in ebooks %}
+                <tr>
+                    <td>
+                        <img src="{{ b.cover_url }}" alt="{{ b.title }}" class="rounded shadow-sm" style="width: 42px; height: 60px; object-fit: cover;"
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80';">
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ b.title }}</div>
+                        <small class="text-muted font-monospace">ID: #{{ b.ebook_id }}</small>
+                    </td>
+                    <td class="text-secondary small">{{ b.author_name }}</td>
+                    <td><span class="badge bg-light text-dark border">{{ b.category_name }}</span></td>
+                    <td class="fw-bold text-primary">฿{{ "%.2f"|format(b.price) }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">
+                            {{ b.sales_count }} ออเดอร์
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if b.is_active == 1 %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
+                                <i class="bi bi-check-circle-fill me-1"></i>เปิดขาย
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
+                                <i class="bi bi-pause-circle-fill me-1"></i>ปิดการขาย
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <!-- Toggle status button -->
+                            <form action="{{ url_for('admin_ebook_toggle', ebook_id=b.ebook_id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm {% if b.is_active == 1 %}btn-outline-warning{% else %}btn-outline-success{% endif %}" title="{% if b.is_active == 1 %}กดเพื่อปิดการขาย{% else %}กดเพื่อเปิดขาย{% endif %}">
+                                    <i class="bi {% if b.is_active == 1 %}bi-eye-slash-fill{% else %}bi-eye-fill{% endif %}"></i>
+                                </button>
+                            </form>
+
+                            <!-- Edit button -->
+                            <a href="{{ url_for('admin_ebook_edit', ebook_id=b.ebook_id) }}" class="btn btn-sm btn-outline-primary" title="แก้ไขข้อมูล">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
+
+                            <!-- View in Storefront -->
+                            <a href="{{ url_for('ebook_detail', ebook_id=b.ebook_id) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="ดูหน้าร้าน">
+                                <i class="bi bi-box-arrow-up-right"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

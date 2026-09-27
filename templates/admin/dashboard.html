@@ -1,0 +1,234 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}แดชบอร์ดผู้ดูแลร้าน - E-Book Store{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">แดชบอร์ดภาพรวมร้านค้า (Dashboard)</h2>
+        <p class="text-muted small mb-0">ข้อมูลสถิติและการวิเคราะห์เชิงลึกจากฐานข้อมูลระบบจริง</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0 gap-2">
+        <a href="{{ url_for('admin_reports') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+            <i class="bi bi-file-earmark-bar-graph me-1"></i>ดูรายงานวิเคราะห์ทั้ง 4 ฉบับ
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards Row -->
+<div class="row g-3 mb-4">
+    <!-- Total Revenue -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card p-3 border-0">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold">ยอดขายสะสม (ยืนยันแล้ว)</span>
+                <div class="p-2 bg-primary-subtle text-primary rounded-circle">
+                    <i class="bi bi-cash-coin fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">฿{{ "%.2f"|format(total_sales) }}</h3>
+            <div class="small text-success mt-2">
+                <i class="bi bi-check-circle-fill me-1"></i>จากคำสั่งซื้อที่เสร็จสมบูรณ์
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Orders -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card p-3 border-0">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold">คำสั่งซื้อทั้งหมด</span>
+                <div class="p-2 bg-info-subtle text-info rounded-circle">
+                    <i class="bi bi-receipt fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ total_orders }} รายการ</h3>
+            <div class="small text-muted mt-2">
+                <span class="text-success fw-bold">{{ confirmed_orders }} ยืนยัน</span> | 
+                <span class="text-warning fw-bold">{{ pending_orders }} รอชำระ</span> | 
+                <span class="text-danger fw-bold">{{ cancelled_orders }} ยกเลิก</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total E-Books -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card p-3 border-0">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold">หนังสือ E-Book ในระบบ</span>
+                <div class="p-2 bg-success-subtle text-success rounded-circle">
+                    <i class="bi bi-book-half fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ total_ebooks }} เล่ม</h3>
+            <div class="small text-muted mt-2">
+                <a href="{{ url_for('admin_ebooks') }}" class="text-decoration-none">จัดการหนังสือ &raquo;</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Customers -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card p-3 border-0">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold">สมาชิกในระบบ (ลูกค้า)</span>
+                <div class="p-2 bg-warning-subtle text-warning rounded-circle">
+                    <i class="bi bi-people-fill fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">{{ total_users }} คน</h3>
+            <div class="small text-muted mt-2">
+                <a href="{{ url_for('admin_users') }}" class="text-decoration-none">จัดการสมาชิก &raquo;</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <!-- Monthly Sales Chart -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-graph-up me-2 text-primary"></i>แนวโน้มยอดขายรายเดือน (Sales Trend)</h5>
+            <div style="position: relative; height: 280px;">
+                <canvas id="monthlySalesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Sales Breakdown -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart-fill me-2 text-info"></i>สัดส่วนยอดขายตามหมวดหมู่</h5>
+            <div style="position: relative; height: 280px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders Table -->
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2 text-primary"></i>คำสั่งซื้อล่าสุด (Recent Orders)</h5>
+        <a href="{{ url_for('admin_orders') }}" class="btn btn-outline-secondary btn-sm rounded-pill">ดูคำสั่งซื้อทั้งหมด &raquo;</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>เลขที่คำสั่งซื้อ</th>
+                    <th>วันที่</th>
+                    <th>ลูกค้า</th>
+                    <th>ยอดชำระ</th>
+                    <th>วิธีชำระ</th>
+                    <th class="text-center">สถานะ</th>
+                    <th class="text-end">การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ord in recent_orders %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('admin_order_view', order_id=ord.order_id) }}" class="fw-bold font-monospace text-decoration-none">
+                            {{ ord.order_number }}
+                        </a>
+                    </td>
+                    <td class="text-muted small">{{ ord.order_date[:16] }}</td>
+                    <td>
+                        <span class="fw-semibold text-dark">{{ ord.full_name }}</span>
+                        <small class="text-muted d-block">@{{ ord.username }}</small>
+                    </td>
+                    <td class="fw-bold text-primary">฿{{ "%.2f"|format(ord.total_amount) }}</td>
+                    <td>
+                        <span class="badge bg-light text-dark border small">
+                            {{ ord.payment_method }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if ord.status == 'CONFIRMED' %}
+                            <span class="badge badge-status-confirmed px-3 py-1 rounded-pill">ยืนยันแล้ว</span>
+                        {% elif ord.status == 'PENDING' %}
+                            <span class="badge badge-status-pending px-3 py-1 rounded-pill">รอตรวจสอบ</span>
+                        {% else %}
+                            <span class="badge badge-status-cancelled px-3 py-1 rounded-pill">ยกเลิกแล้ว</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('admin_order_view', order_id=ord.order_id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            ตรวจสอบสลิป
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Monthly Sales Chart Data
+const monthlyLabels = [{% for m in monthly_sales %}'{{ m.month }}',{% endfor %}];
+const monthlyData = [{% for m in monthly_sales %}{{ m.total }},{% endfor %}];
+
+new Chart(document.getElementById('monthlySalesChart'), {
+    type: 'bar',
+    data: {
+        labels: monthlyLabels,
+        datasets: [{
+            label: 'ยอดขาย (บาท)',
+            data: monthlyData,
+            backgroundColor: 'rgba(37, 99, 235, 0.75)',
+            borderColor: '#2563eb',
+            borderWidth: 2,
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(val) { return '฿' + val.toLocaleString(); }
+                }
+            }
+        }
+    }
+});
+
+// Category Sales Doughnut Data
+const catLabels = [{% for c in cat_sales %}'{{ c.category_name }}',{% endfor %}];
+const catData = [{% for c in cat_sales %}{{ c.total }},{% endfor %}];
+
+new Chart(document.getElementById('categoryChart'), {
+    type: 'doughnut',
+    data: {
+        labels: catLabels,
+        datasets: [{
+            data: catData,
+            backgroundColor: [
+                '#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#64748b'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { boxWidth: 12, font: { size: 11 } }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

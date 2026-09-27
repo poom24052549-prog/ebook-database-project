@@ -1,0 +1,176 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}ตรวจสอบคำสั่งซื้อ #{{ order.order_number }} - ผู้ดูแลระบบ{% endblock %}
+
+{% block admin_content %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">แดชบอร์ด</a></li>
+        <li class="breadcrumb-item"><a href="{{ url_for('admin_orders') }}">จัดการคำสั่งซื้อ</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ order.order_number }}</li>
+    </ol>
+</nav>
+
+<div class="row">
+    <!-- Left Column: Order Items & Actions -->
+    <div class="col-lg-8 mb-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                <div>
+                    <h3 class="fw-bold mb-1">
+                        คำสั่งซื้อ <span class="font-monospace text-primary">{{ order.order_number }}</span>
+                    </h3>
+                    <div class="text-muted small">
+                        <i class="bi bi-clock me-1"></i>เวลาที่สั่งซื้อ: {{ order.order_date }}
+                    </div>
+                </div>
+                <div>
+                    {% if order.status == 'CONFIRMED' %}
+                        <span class="badge badge-status-confirmed px-3 py-2 rounded-pill fs-6">
+                            <i class="bi bi-check-circle-fill me-1"></i>ยืนยันแล้ว
+                        </span>
+                    {% elif order.status == 'PENDING' %}
+                        <span class="badge badge-status-pending px-3 py-2 rounded-pill fs-6">
+                            <i class="bi bi-clock-history me-1"></i>รอตรวจสอบ
+                        </span>
+                    {% else %}
+                        <span class="badge badge-status-cancelled px-3 py-2 rounded-pill fs-6">
+                            <i class="bi bi-x-circle-fill me-1"></i>ยกเลิกแล้ว
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <h5 class="fw-bold mb-3">รายการหนังสือที่สั่งซื้อ</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>หนังสือ</th>
+                            <th class="text-center">ราคาต่อเล่ม</th>
+                            <th class="text-center">จำนวน</th>
+                            <th class="text-end">ยอดรวม</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for it in items %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="{{ it.cover_url }}" alt="{{ it.title }}" class="rounded shadow-sm" style="width: 48px; height: 68px; object-fit: cover;"
+                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80';">
+                                    <div>
+                                        <div class="fw-bold text-dark">{{ it.title }}</div>
+                                        <small class="text-muted">{{ it.author_name }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center">฿{{ "%.2f"|format(it.unit_price) }}</td>
+                            <td class="text-center">{{ it.quantity }}</td>
+                            <td class="text-end fw-bold text-primary">฿{{ "%.2f"|format(it.subtotal) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end fw-bold fs-6">ยอดรวมสุทธิ:</td>
+                            <td class="text-end fw-bold fs-5 text-primary">฿{{ "%.2f"|format(order.total_amount) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Status Update Form -->
+            <div class="p-3 bg-light rounded-3 border mt-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-pencil-square text-primary me-2"></i>อัปเดตสถานะคำสั่งซื้อ & บันทึกร้านค้า</h6>
+                <form action="{{ url_for('admin_order_update_status', order_id=order.order_id) }}" method="POST">
+                    <div class="row g-3 align-items-center mb-3">
+                        <div class="col-md-5">
+                            <label class="form-label small fw-semibold">เปลี่ยนสถานะเป็น:</label>
+                            <select name="status" class="form-select">
+                                <option value="CONFIRMED" {% if order.status == 'CONFIRMED' %}selected{% endif %}>
+                                    ยืนยันแล้ว (อนุมัติสิทธิ์ดาวน์โหลด E-Book)
+                                </option>
+                                <option value="PENDING" {% if order.status == 'PENDING' %}selected{% endif %}>
+                                    รอตรวจสอบ (ระงับการดาวน์โหลดชั่วคราว)
+                                </option>
+                                <option value="CANCELLED" {% if order.status == 'CANCELLED' %}selected{% endif %}>
+                                    ยกเลิกคำสั่งซื้อ (ปิดการดาวน์โหลด)
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-7">
+                            <label class="form-label small fw-semibold">บันทึกข้อความ / เหตุผล (Admin Notes):</label>
+                            <input type="text" name="admin_notes" class="form-control" value="{{ order.admin_notes or '' }}" placeholder="เช่น ยอดเงินโอนถูกต้อง หรือ สลิปไม่ชัดเจน">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                        <i class="bi bi-save me-1"></i>บันทึกการเปลี่ยนแปลงสถานะ
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Customer Info & Slip Viewer -->
+    <div class="col-lg-4">
+        <!-- Customer Info -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">ข้อมูลผู้สั่งซื้อ</h5>
+            <div class="mb-2">
+                <small class="text-muted d-block">ชื่อ-นามสกุล:</small>
+                <span class="fw-bold text-dark">{{ order.full_name }}</span>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">ชื่อผู้ใช้ (Username):</small>
+                <span class="font-monospace text-primary">@{{ order.username }}</span>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">อีเมล:</small>
+                <span>{{ order.email }}</span>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted d-block">เบอร์โทรศัพท์:</small>
+                <span>{{ order.phone or '-' }}</span>
+            </div>
+            {% if order.notes %}
+            <div class="mb-2">
+                <small class="text-muted d-block">หมายเหตุจากลูกค้า:</small>
+                <span class="text-secondary small">{{ order.notes }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Payment Slip Preview -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">หลักฐานการชำระเงินจำลอง</h5>
+            <div class="mb-2">
+                <small class="text-muted d-block">ช่องทางที่เลือก:</small>
+                <span class="badge bg-light text-dark border">{{ order.payment_method }}</span>
+            </div>
+            <div class="mb-3">
+                <small class="text-muted d-block">สถานะการชำระเงิน:</small>
+                <span class="fw-bold {% if order.payment_status == 'VERIFIED' %}text-success{% elif order.payment_status == 'PENDING' %}text-warning{% else %}text-danger{% endif %}">
+                    {{ order.payment_status }}
+                </span>
+            </div>
+
+            {% if order.slip_image %}
+            <div class="text-center p-2 bg-light rounded-3 border">
+                <img src="{{ order.slip_image }}" alt="Slip Image" class="img-fluid rounded mb-2" style="max-height: 280px;"
+                     onerror="this.onerror=null; this.src='/static/uploads/slips/mock_slip_1.png';">
+                <div>
+                    <a href="{{ order.slip_image }}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill">
+                        <i class="bi bi-arrows-fullscreen me-1"></i>เปิดดูภาพขนาดเต็ม
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary text-center small mb-0">
+                ไม่มีภาพสลิปแนบมา
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

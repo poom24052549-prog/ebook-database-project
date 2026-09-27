@@ -1,0 +1,94 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}{% if ebook %}แก้ไข E-Book: {{ ebook.title }}{% else %}เพิ่ม E-Book เล่มใหม่{% endif %} - ผู้ดูแลระบบ{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">{% if ebook %}แก้ไขข้อมูล E-Book{% else %}เพิ่ม E-Book เล่มใหม่เข้าระบบ{% endif %}</h2>
+        <p class="text-muted small mb-0">กำหนดรายละเอียดหนังสือ ราคา ผู้แต่ง หมวดหมู่ และไฟล์เอกสารดิจิทัล</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('admin_ebooks') }}" class="btn btn-outline-secondary btn-sm rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i>กลับไปรายการหนังสือ
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+    <form method="POST">
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <label for="title" class="form-label fw-semibold">ชื่อหนังสือ (Title) <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="title" name="title" value="{{ ebook.title if ebook else '' }}" required placeholder="ระบุชื่อเรื่องหนังสือ">
+            </div>
+            <div class="col-md-4">
+                <label for="price" class="form-label fw-semibold">ราคา (บาท) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text">฿</span>
+                    <input type="number" step="0.01" min="0" class="form-control" id="price" name="price" value="{{ ebook.price if ebook else '' }}" required placeholder="0.00">
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label for="author_id" class="form-label fw-semibold">ผู้แต่ง (Author) <span class="text-danger">*</span></label>
+                <select class="form-select" id="author_id" name="author_id" required>
+                    <option value="" disabled {% if not ebook %}selected{% endif %}>-- เลือกผู้แต่ง --</option>
+                    {% for a in authors %}
+                    <option value="{{ a.author_id }}" {% if ebook and ebook.author_id == a.author_id %}selected{% endif %}>
+                        {{ a.author_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="category_id" class="form-label fw-semibold">หมวดหมู่ (Category) <span class="text-danger">*</span></label>
+                <select class="form-select" id="category_id" name="category_id" required>
+                    <option value="" disabled {% if not ebook %}selected{% endif %}>-- เลือกหมวดหมู่ --</option>
+                    {% for c in categories %}
+                    <option value="{{ c.category_id }}" {% if ebook and ebook.category_id == c.category_id %}selected{% endif %}>
+                        {{ c.category_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label for="description" class="form-label fw-semibold">คำอธิบายเนื้อหา / เรื่องย่อ</label>
+            <textarea class="form-control" id="description" name="description" rows="4" placeholder="ระบุบทคัดย่อ จุดเด่น หรือเนื้อหาโดยย่อของหนังสือ">{{ ebook.description if ebook else '' }}</textarea>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label for="cover_url" class="form-label fw-semibold">URL ภาพหน้าปก (Cover Image URL)</label>
+                <input type="url" class="form-control" id="cover_url" name="cover_url" value="{{ ebook.cover_url if ebook else '' }}" placeholder="https://example.com/cover.jpg">
+                <small class="text-muted">ใส่ลิงก์รูปภาพ หรือปล่อยว่างเพื่อใช้ภาพตัวอย่างเริ่มต้น</small>
+            </div>
+            <div class="col-md-6">
+                <label for="download_file_url" class="form-label fw-semibold">ที่อยู่ไฟล์ดาวน์โหลด (Download Target URL) <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="download_file_url" name="download_file_url" value="{{ ebook.download_file_url if ebook else '/downloads/sample_database_design.pdf' }}" required placeholder="/downloads/sample_database_design.pdf">
+                <small class="text-muted">ไฟล์ดิจิทัลที่ผู้ใช้จะได้รับหลังคำสั่งซื้อได้รับการยืนยัน</small>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if not ebook or ebook.is_active == 1 %}checked{% endif %}>
+                <label class="form-check-label fw-semibold" for="is_active">
+                    เปิดสถานะพร้อมจำหน่าย (Active for Sale)
+                </label>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <a href="{{ url_for('admin_ebooks') }}" class="btn btn-outline-secondary rounded-pill px-4">ยกเลิก</a>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="bi bi-save me-1"></i>{% if ebook %}บันทึกการแก้ไข{% else %}เพิ่มหนังสือลงระบบ{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

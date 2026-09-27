@@ -1,0 +1,102 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}จัดการหมวดหมู่ - ผู้ดูแลระบบ{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">จัดการหมวดหมู่หนังสือ (Category Management)</h2>
+        <p class="text-muted small mb-0">เพิ่ม แก้ไข และจัดกลุ่มหมวดหมู่สำหรับคัดกรอง E-Book</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Form to Add/Edit Category -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold mb-3" id="formHeader"><i class="bi bi-folder-plus text-primary me-2"></i>เพิ่มหมวดหมู่ใหม่</h5>
+            <form method="POST">
+                <input type="hidden" name="category_id" id="category_id" value="">
+                
+                <div class="mb-3">
+                    <label for="category_name" class="form-label fw-semibold">ชื่อหมวดหมู่ <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="category_name" name="category_name" required placeholder="เช่น วิทยาศาสตร์ข้อมูล & AI">
+                </div>
+
+                <div class="mb-3">
+                    <label for="description" class="form-label fw-semibold">คำอธิบาย</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" placeholder="ระบุรายละเอียดหมวดหมู่"></textarea>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 flex-grow-1 shadow-sm">
+                        <i class="bi bi-save me-1"></i>บันทึกข้อมูล
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" onclick="resetForm()">
+                        ล้างฟอร์ม
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Category List Table -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold mb-3"><i class="bi bi-tags text-primary me-2"></i>รายชื่อหมวดหมู่ทั้งหมด ({{ categories|length }} หมวด)</h5>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 60px;">ID</th>
+                            <th>ชื่อหมวดหมู่</th>
+                            <th>คำอธิบาย</th>
+                            <th class="text-center">จำนวนหนังสือ</th>
+                            <th class="text-end">การจัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in categories %}
+                        <tr>
+                            <td class="font-monospace text-muted">#{{ c.category_id }}</td>
+                            <td class="fw-bold text-dark">{{ c.category_name }}</td>
+                            <td class="text-secondary small">{{ c.description or '-' }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">
+                                    {{ c.ebook_count }} เล่ม
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" 
+                                        onclick="editCategory({{ c.category_id }}, '{{ c.category_name }}', '{{ c.description or '' }}')">
+                                    <i class="bi bi-pencil me-1"></i>แก้ไข
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function editCategory(id, name, desc) {
+    document.getElementById('category_id').value = id;
+    document.getElementById('category_name').value = name;
+    document.getElementById('description').value = desc;
+    document.getElementById('formHeader').innerHTML = '<i class="bi bi-pencil-square text-warning me-2"></i>แก้ไขหมวดหมู่ #' + id;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+    document.getElementById('category_id').value = '';
+    document.getElementById('category_name').value = '';
+    document.getElementById('description').value = '';
+    document.getElementById('formHeader').innerHTML = '<i class="bi bi-folder-plus text-primary me-2"></i>เพิ่มหมวดหมู่ใหม่';
+}
+</script>
+{% endblock %}

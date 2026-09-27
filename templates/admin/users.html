@@ -1,0 +1,81 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}จัดการผู้ใช้งาน - ผู้ดูแลระบบ{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">จัดการผู้ใช้งาน & กำหนดบทบาท (User Roles)</h2>
+        <p class="text-muted small mb-0">ตรวจสอบรายชื่อสมาชิก ยอดการสั่งซื้อ และกำหนดสิทธิ์ระหว่าง ลูกค้า (Customer) และ ผู้ดูแลระบบ (Admin)</p>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50px;">ID</th>
+                    <th>ผู้ใช้งาน</th>
+                    <th>อีเมล / เบอร์โทร</th>
+                    <th>วันที่สมัคร</th>
+                    <th class="text-center">คำสั่งซื้อ</th>
+                    <th class="text-end">ยอดซื้อสะสม</th>
+                    <th class="text-center">บทบาท (Role)</th>
+                    <th class="text-end">เปลี่ยนสิทธิ์</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="font-monospace text-muted">#{{ u.user_id }}</td>
+                    <td>
+                        <div class="fw-bold text-dark">{{ u.full_name }}</div>
+                        <small class="text-muted font-monospace">@{{ u.username }}</small>
+                    </td>
+                    <td>
+                        <div>{{ u.email }}</div>
+                        <small class="text-muted">{{ u.phone or '-' }}</small>
+                    </td>
+                    <td class="text-muted small">{{ u.created_at[:10] }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark border">{{ u.total_orders }} ออเดอร์</span>
+                    </td>
+                    <td class="text-end fw-bold text-primary">
+                        ฿{{ "%.2f"|format(u.total_spent) }}
+                    </td>
+                    <td class="text-center">
+                        {% if u.role_name == 'admin' %}
+                            <span class="badge bg-danger px-3 py-1 rounded-pill">
+                                <i class="bi bi-shield-lock me-1"></i>ADMIN
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill">
+                                CUSTOMER
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if u.user_id != session['user_id'] %}
+                        <form action="{{ url_for('admin_change_role', user_id=u.user_id) }}" method="POST" class="d-inline">
+                            <input type="hidden" name="role_id" value="{% if u.role_id == 1 %}2{% else %}1{% endif %}">
+                            <button type="submit" class="btn btn-sm {% if u.role_id == 1 %}btn-outline-danger{% else %}btn-outline-secondary{% endif %} rounded-pill px-3"
+                                    onclick="return confirm('ยืนยันเปลี่ยนบทบาทของ {{ u.username }} ใช่หรือไม่?')">
+                                {% if u.role_id == 1 %}
+                                    <i class="bi bi-arrow-up-circle me-1"></i>ตั้งเป็น Admin
+                                {% else %}
+                                    <i class="bi bi-arrow-down-circle me-1"></i>ปรับเป็น Customer
+                                {% endif %}
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="badge bg-light text-muted border small">บัญชีปัจจุบัน</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

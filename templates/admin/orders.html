@@ -1,0 +1,131 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}จัดการคำสั่งซื้อ - ผู้ดูแลระบบ{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">จัดการคำสั่งซื้อ & ตรวจสอบการชำระเงิน (Orders)</h2>
+        <p class="text-muted small mb-0">ค้นหา ตรวจสอบหลักฐานโอนเงินจำลอง และเปลี่ยนสถานะคำสั่งซื้อ</p>
+    </div>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ url_for('admin_reports') }}" class="btn btn-outline-primary btn-sm rounded-pill">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>ดูรายงานยอดขาย
+        </a>
+    </div>
+</div>
+
+<!-- Status Filters -->
+<div class="d-flex flex-wrap gap-2 mb-4">
+    <a href="{{ url_for('admin_orders', status='all') }}" class="btn btn-sm rounded-pill px-3 {% if current_filter == 'all' %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+        ทั้งหมด ({{ orders|length if current_filter == 'all' else 'All' }})
+    </a>
+    <a href="{{ url_for('admin_orders', status='PENDING') }}" class="btn btn-sm rounded-pill px-3 {% if current_filter == 'PENDING' %}btn-warning text-dark fw-bold{% else %}btn-outline-warning text-dark{% endif %}">
+        <i class="bi bi-clock-history me-1"></i>รอตรวจสอบ (PENDING)
+    </a>
+    <a href="{{ url_for('admin_orders', status='CONFIRMED') }}" class="btn btn-sm rounded-pill px-3 {% if current_filter == 'CONFIRMED' %}btn-success fw-bold{% else %}btn-outline-success{% endif %}">
+        <i class="bi bi-check-circle me-1"></i>ยืนยันแล้ว (CONFIRMED)
+    </a>
+    <a href="{{ url_for('admin_orders', status='CANCELLED') }}" class="btn btn-sm rounded-pill px-3 {% if current_filter == 'CANCELLED' %}btn-danger fw-bold{% else %}btn-outline-danger{% endif %}">
+        <i class="bi bi-x-circle me-1"></i>ยกเลิกแล้ว (CANCELLED)
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>เลขที่คำสั่งซื้อ</th>
+                    <th>วันที่</th>
+                    <th>ลูกค้า</th>
+                    <th>ยอดชำระ</th>
+                    <th>วิธีชำระ</th>
+                    <th class="text-center">สลิปจำลอง</th>
+                    <th class="text-center">สถานะ</th>
+                    <th class="text-end">การจัดการ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ord in orders %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('admin_order_view', order_id=ord.order_id) }}" class="fw-bold font-monospace text-decoration-none">
+                            {{ ord.order_number }}
+                        </a>
+                    </td>
+                    <td class="text-muted small">{{ ord.order_date[:16] }}</td>
+                    <td>
+                        <div class="fw-semibold text-dark">{{ ord.full_name }}</div>
+                        <small class="text-muted">@{{ ord.username }}</small>
+                    </td>
+                    <td class="fw-bold text-primary">฿{{ "%.2f"|format(ord.total_amount) }}</td>
+                    <td>
+                        <span class="badge bg-light text-dark border small">
+                            {{ ord.payment_method }}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        {% if ord.slip_image %}
+                        <a href="{{ ord.slip_image }}" target="_blank" class="btn btn-outline-info btn-sm py-0 px-2 rounded-pill" title="คลิกเพื่อดูภาพเต็ม">
+                            <i class="bi bi-image me-1"></i>ดูสลิป
+                        </a>
+                        {% else %}
+                        <span class="text-muted small">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if ord.status == 'CONFIRMED' %}
+                            <span class="badge badge-status-confirmed px-3 py-1 rounded-pill">ยืนยันแล้ว</span>
+                        {% elif ord.status == 'PENDING' %}
+                            <span class="badge badge-status-pending px-3 py-1 rounded-pill">รอตรวจสอบ</span>
+                        {% else %}
+                            <span class="badge badge-status-cancelled px-3 py-1 rounded-pill">ยกเลิกแล้ว</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="dropdown d-inline">
+                            <button class="btn btn-sm btn-outline-secondary rounded-pill dropdown-toggle px-3" type="button" data-bs-toggle="dropdown">
+                                จัดการ
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <li>
+                                    <a class="dropdown-item" href="{{ url_for('admin_order_view', order_id=ord.order_id) }}">
+                                        <i class="bi bi-eye me-2"></i>ดูรายละเอียดคำสั่งซื้อ
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{{ url_for('admin_order_update_status', order_id=ord.order_id) }}" method="POST">
+                                        <input type="hidden" name="status" value="CONFIRMED">
+                                        <button type="submit" class="dropdown-item text-success fw-semibold">
+                                            <i class="bi bi-check-circle-fill me-2"></i>ยืนยันคำสั่งซื้อ (เปิดโหลด)
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('admin_order_update_status', order_id=ord.order_id) }}" method="POST">
+                                        <input type="hidden" name="status" value="PENDING">
+                                        <button type="submit" class="dropdown-item text-warning">
+                                            <i class="bi bi-clock-history me-2"></i>ปรับเป็นรอตรวจสอบ
+                                        </button>
+                                    </form>
+                                </li>
+                                <li>
+                                    <form action="{{ url_for('admin_order_update_status', order_id=ord.order_id) }}" method="POST">
+                                        <input type="hidden" name="status" value="CANCELLED">
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-x-circle-fill me-2"></i>ยกเลิกคำสั่งซื้อ
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
