@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ศูนย์รวมแผนภาพและไดอะแกรมระบบ (Diagrams Viewer) - E-Book Store</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Mermaid JS CDN -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; color: #1e293b; padding-bottom: 4rem; }
+        .diagram-container { background: #ffffff; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.07); border: 1px solid #e2e8f0; margin-bottom: 2rem; overflow-x: auto; }
+        .nav-pills .nav-link { border-radius: 30px; font-weight: 500; padding: 0.6rem 1.5rem; margin-right: 0.5rem; color: #475569; }
+        .nav-pills .nav-link.active { background-color: #2563eb; color: #ffffff; }
+    </style>
+</head>
+<body>
+
+    <header class="bg-white border-bottom py-4 mb-4 shadow-sm">
+        <div class="container text-center">
+            <span class="badge bg-primary px-3 py-2 rounded-pill mb-2">Database Mini Project - E-Book Store</span>
+            <h1 class="fw-bold mb-1">คลังแผนผังและไดอะแกรมระบบทั้งหมด</h1>
+            <p class="text-muted mb-0">รวบรวม ERD, สถาปัตยกรรมระบบ, Customer Flow, Admin Flow, และ Data Flow Diagram (DFD)</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-pills justify-content-center mb-4 flex-wrap gap-2" id="diagramTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-erd" data-bs-toggle="pill" data-bs-target="#pane-erd" type="button" role="tab">
+                    <i class="bi bi-diagram-3-fill me-1"></i> 1. แผนภาพ ERD (11 ตาราง)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-arch" data-bs-toggle="pill" data-bs-target="#pane-arch" type="button" role="tab">
+                    <i class="bi bi-hdd-network-fill me-1"></i> 2. สถาปัตยกรรมระบบ (Architecture)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-cust" data-bs-toggle="pill" data-bs-target="#pane-cust" type="button" role="tab">
+                    <i class="bi bi-cart-check-fill me-1"></i> 3. Customer Flowchart
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-admin" data-bs-toggle="pill" data-bs-target="#pane-admin" type="button" role="tab">
+                    <i class="bi bi-shield-check me-1"></i> 4. Admin Flowchart
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-dfd" data-bs-toggle="pill" data-bs-target="#pane-dfd" type="button" role="tab">
+                    <i class="bi bi-arrow-left-right me-1"></i> 5. Data Flow Diagram (DFD)
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Panes -->
+        <div class="tab-content" id="diagramTabContent">
+
+            <!-- TAB 1: ERD -->
+            <div class="tab-pane fade show active" id="pane-erd" role="tabpanel">
+                <div class="diagram-container text-center">
+                    <div class="d-flex justify-content-between align-items-center mb-3 text-start">
+                        <div>
+                            <h3 class="fw-bold mb-0">1. Entity-Relationship Diagram (ERD - 3NF)</h3>
+                            <small class="text-muted">แสดงความสัมพันธ์ PK, FK, Constraints และ Cardinality ครบ 11 ตาราง</small>
+                        </div>
+                        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill">3NF Normalized</span>
+                    </div>
+                    <div class="mermaid">
+erDiagram
+    ROLES ||--o{ USERS : "defines role for"
+    USERS ||--|| CARTS : "owns"
+    CARTS ||--o{ CART_ITEMS : "contains"
+    EBOOKS ||--o{ CART_ITEMS : "added as"
+    CATEGORIES ||--o{ EBOOKS : "classifies"
+    AUTHORS ||--o{ EBOOKS : "writes"
+    USERS ||--o{ ORDERS : "places"
+    ORDERS ||--|{ ORDER_ITEMS : "includes"
+    EBOOKS ||--o{ ORDER_ITEMS : "sold in"
+    ORDERS ||--|| PAYMENTS : "paid via"
+    ORDERS ||--o{ DOWNLOAD_LINKS : "generates"
+    EBOOKS ||--o{ DOWNLOAD_LINKS : "target of"
+    USERS ||--o{ DOWNLOAD_LINKS : "granted to"
+
+    ROLES {
+        int role_id PK
+        string role_name
+        string description
+    }
+
+    USERS {
+        int user_id PK
+        int role_id FK
+        string username
+        string email
+        string password_hash
+        string full_name
+        string phone
+        timestamp created_at
+    }
+
+    CATEGORIES {
+        int category_id PK
+        string category_name
+        string description
+    }
+
+    AUTHORS {
+        int author_id PK
+        string author_name
+        string bio
+        string email
+    }
+
+    EBOOKS {
+        int ebook_id PK
+        string title
+        int author_id FK
+        int category_id FK
+        real price
+        string description
+        string cover_url
+        string download_file_url
+        int is_active
+        timestamp created_at
+    }
+
+    CARTS {
+        int cart_id PK
+        int user_id FK
+        timestamp updated_at
+    }
+
+    CART_ITEMS {
+        int cart_item_id PK
+        int cart_id FK
+        int ebook_id FK
+        int quantity
+        timestamp added_at
+    }
+
+    ORDERS {
+        int order_id PK
+        string order_number
+        int user_id FK
+        real total_amount
+        string status
+        timestamp order_date
+        string notes
+    }
+
+    ORDER_ITEMS {
+        int order_item_id PK
+        int order_id FK
+        int ebook_id FK
+        real unit_price
+        int quantity
+        real subtotal
+    }
+
+    PAYMENTS {
+        int payment_id PK
+        int order_id FK
+        string payment_method
+        real amount
+        string slip_image
+        timestamp payment_date
+        string payment_status
+        string admin_notes
+    }
+
+    DOWNLOAD_LINKS {
+        int download_id PK
+        int order_id FK
+        int ebook_id FK
+        int user_id FK
+        string download_token
+        timestamp expiry_date
+        int download_count
+        int is_active
+        timestamp created_at
+    }
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: SYSTEM ARCHITECTURE -->
+            <div class="tab-pane fade" id="pane-arch" role="tabpanel">
+                <div class="diagram-container text-center">
+                    <div class="text-start mb-3">
+                        <h3 class="fw-bold mb-0">2. สถาปัตยกรรมระบบ (System Architecture)</h3>
+                        <small class="text-muted">ความสัมพันธ์ระหว่าง Client Browser, Flask Backend, SQLite3, และ File Storage</small>
+                    </div>
+                    <div class="mermaid">
+graph TD
+    BrowserCustomer["🌐 ลูกค้าทั่วไป (Customer Browser)<br>- ค้นหา/เลือกดู E-Book<br>- จัดการตะกร้าสินค้า<br>- ชำระเงินจำลอง & รับไฟล์ PDF"]
+    BrowserAdmin["💻 ผู้ดูแลระบบ (Admin Browser)<br>- จัดการ E-Book & หมวดหมู่<br>- ตรวจสอบสลิป & อนุมัติออเดอร์<br>- ดู 4 รายงานวิเคราะห์ & กราฟ"]
+
+    subgraph AppTier ["เซิร์ฟเวอร์แอปพลิเคชัน (Python Flask Web Server)"]
+        Router["HTTP Router & Session Middleware<br>Auth Decorators (@login_required, @admin_required)"]
+        AuthModule["โมดูลยืนยันตัวตน (Auth)"]
+        StoreModule["โมดูลหน้าร้าน & ตะกร้า"]
+        OrderModule["โมดูลสั่งซื้อ & ชำระเงิน"]
+        DownloadModule["โมดูลส่งมอบไฟล์ปลอดภัย"]
+        AdminModule["โมดูลจัดการหลังบ้าน"]
+        ReportModule["โมดูล 4 รายงานวิเคราะห์"]
+    end
+
+    subgraph DataTier ["ระบบจัดการข้อมูล & พื้นที่จัดเก็บ"]
+        DBEngine["🗄️ SQLite3 Database (ebook_store.db)<br>PRAGMA foreign_keys = ON<br>11 ตารางเชิงสัมพันธ์ (3NF)"]
+        PDFStore["📁 static/downloads/<br>ไฟล์หนังสือดิจิทัลตัวอย่าง (PDF)"]
+        SlipStore["📁 static/uploads/slips/<br>หลักฐานการชำระเงินจำลอง"]
+    end
+
+    BrowserCustomer <==> Router
+    BrowserAdmin <==> Router
+
+    Router --> AuthModule
+    Router --> StoreModule
+    Router --> OrderModule
+    Router --> DownloadModule
+    Router --> AdminModule
+    Router --> ReportModule
+
+    AuthModule <--> DBEngine
+    StoreModule <--> DBEngine
+    OrderModule <--> DBEngine
+    DownloadModule <--> DBEngine
+    AdminModule <--> DBEngine
+    ReportModule <--> DBEngine
+
+    DownloadModule --> PDFStore
+    OrderModule --> SlipStore
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: CUSTOMER FLOW -->
+            <div class="tab-pane fade" id="pane-cust" role="tabpanel">
+                <div class="diagram-container text-center">
+                    <div class="text-start mb-3">
+                        <h3 class="fw-bold mb-0">3. แผนผังเส้นทางลูกค้า (Customer Purchase & Download Flow)</h3>
+                        <small class="text-muted">ตั้งแต่เลือกหนังสือ สั่งซื้อ แนบสลิป ตรวจสอบสถานะ จนถึงรับไฟล์ PDF</small>
+                    </div>
+                    <div class="mermaid">
+flowchart TD
+    Start(["เริ่มต้น: เข้าสู่หน้าร้าน"]) --> Browse["1. ค้นหา / เลือกดูหนังสือ E-Book"]
+    Browse --> AddCart["2. กดใส่ตะกร้าสินค้า"]
+    AddCart --> CartPage["3. หน้าตะกร้า: ปรับจำนวน & ตรวจสอบยอดเงิน"]
+    CartPage --> Checkout["4. ไปยังหน้าชำระเงิน (Checkout)"]
+    Checkout --> PaySim["5. เลือกช่องทางชำระเงินจำลอง & แนบสลิป"]
+    PaySim --> Submit["6. กดยืนยันคำสั่งซื้อ"]
+    Submit --> DBInsert["7. ระบบบันทึกคำสั่งซื้อเป็นสถานะ PENDING<br>พร้อมล้างตะกร้าสินค้า"]
+    DBInsert --> Wait["8. รอผู้ดูแลร้านตรวจสอบสลิปจำลอง"]
+    Wait --> Decision{"ผลการตรวจสลิป"}
+    Decision -- "ยืนยันแล้ว (CONFIRMED)" --> TokenGen["9. ระบบสร้าง Secure UUID Token<br>ปุ่มดาวน์โหลดสีเขียวเปิดใช้งาน"]
+    Decision -- "ยกเลิก (CANCELLED)" --> Block["ไม่อนุญาตให้ดาวน์โหลด"]
+    TokenGen --> Download["10. ลูกค้าคลิกดาวน์โหลด PDF ลงเครื่อง"]
+    Download --> EndSuccess(["เสร็จสิ้น"])
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: ADMIN FLOW -->
+            <div class="tab-pane fade" id="pane-admin" role="tabpanel">
+                <div class="diagram-container text-center">
+                    <div class="text-start mb-3">
+                        <h3 class="fw-bold mb-0">4. แผนผังการทำงานของผู้ดูแลร้าน (Admin Verification Flow)</h3>
+                        <small class="text-muted">กระบวนการตรวจสอบสลิปจำลอง และเปลี่ยนสถานะคำสั่งซื้อ</small>
+                    </div>
+                    <div class="mermaid">
+flowchart TD
+    AdminStart(["ผู้ดูแลร้านเข้าสู่ระบบ"]) --> Dash["1. ตรวจสอบแดชบอร์ดภาพรวม"]
+    Dash --> OrderList["2. เข้าหน้ารายการคำสั่งซื้อ (/admin/orders)"]
+    OrderList --> FilterPending["3. เลือกดูคำสั่งซื้อสถานะ 'รอตรวจสอบ (PENDING)'"]
+    FilterPending --> ViewSlip["4. เปิดดูภาพสลิปจำลอง & รายการสั่งซื้อ"]
+    ViewSlip --> CheckSlip{"ตรวจสอบหลักฐานการโอน"}
+    CheckSlip -- "ถูกต้อง ครบถ้วน" --> ConfirmOrder["5. เลือกสถานะ: CONFIRMED (ยืนยันแล้ว)<br>ระบบเจน Token อัตโนมัติใน download_links"]
+    CheckSlip -- "สลิปไม่ถูกต้อง" --> CancelOrder["เลือกสถานะ: CANCELLED (ยกเลิก)"]
+    ConfirmOrder --> ClientDone["✅ ลูกค้าได้รับสิทธิ์ดาวน์โหลดไฟล์"]
+    CancelOrder --> RevokeDone["❌ เพิกถอนสิทธิ์ดาวน์โหลด"]
+    ClientDone --> AdminFinish(["เสร็จสิ้น"])
+    RevokeDone --> AdminFinish
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: DFD -->
+            <div class="tab-pane fade" id="pane-dfd" role="tabpanel">
+                <div class="diagram-container text-center">
+                    <div class="text-start mb-3">
+                        <h3 class="fw-bold mb-0">5. แผนภาพกระแสข้อมูล (Data Flow Diagram - DFD)</h3>
+                        <small class="text-muted">DFD Level 0 (Context Diagram) และ DFD Level 1 แสดงการไหลของข้อมูลใน 6 กระบวนการ</small>
+                    </div>
+                    <div class="mermaid">
+graph TD
+    Customer["👤 ลูกค้า (Customer)"]
+    Admin["👨‍💼 ผู้ดูแลร้าน (Admin)"]
+
+    P1(("1.0 สมาชิก & ยืนยันตัวตน"))
+    P2(("2.0 แคตตาล็อก & ค้นหา"))
+    P3(("3.0 จัดการตะกร้าสินค้า"))
+    P4(("4.0 สั่งซื้อ & ชำระเงินจำลอง"))
+    P5(("5.0 ตรวจสลิป & ส่งมอบไฟล์"))
+    P6(("6.0 วิเคราะห์ข้อมูล & รายงาน"))
+
+    D1[("D1: users & roles")]
+    D2[("D2: ebooks, authors, categories")]
+    D3[("D3: carts & cart_items")]
+    D4[("D4: orders & order_items")]
+    D5[("D5: payments")]
+    D6[("D6: download_links")]
+
+    Customer --> P1 <--> D1
+    Customer --> P2 <--> D2
+    Customer --> P3 <--> D3
+    Customer --> P4 --> D4
+    P4 --> D5
+    P4 --> |ล้างตะกร้า| D3
+    Admin --> P2
+    Admin --> P5 <--> D4
+    P5 <--> D5
+    P5 --> |สร้าง Token| D6
+    Customer --> |กดดาวน์โหลด PDF| P5 <--> D6
+    Admin --> P6 <--> D4
+    P6 <--> D2
+    P6 <--> D1
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

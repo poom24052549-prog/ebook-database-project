@@ -81,6 +81,25 @@ E:\Ebook database\
 │   ├── TEST_CASES.md           # ตารางผลการทดสอบระบบ 9 กรณี
 │   ├── AI_DISCLOSURE.md        # บันทึกการใช้งาน AI อย่างรับผิดชอบ
 │   └── erd.html                # ไฟล์เปิดดูแผนภาพ ERD แบบ Interactive ในเบราว์เซอร์
+├── function_guides/            # โฟลเดอร์คู่มืออธิบายขั้นตอนการทำงานของแต่ละฟังก์ชัน
+│   ├── README.md               # สารบัญคู่มือและภาพรวมทั้ง 9 โมดูล
+│   ├── 01_authentication_and_profile.md
+│   ├── 02_catalog_search_and_filter.md
+│   ├── 03_cart_management.md
+│   ├── 04_checkout_and_simulation_payment.md
+│   ├── 05_secure_download_delivery.md
+│   ├── 06_admin_catalog_and_category.md
+│   ├── 07_admin_orders_and_slip_verification.md
+│   ├── 08_admin_user_roles.md
+│   └── 09_analytical_reports_and_export.md
+├── diagrams/                   # โฟลเดอร์คลังแผนผังและไดอะแกรมระบบทั้งหมด
+│   ├── README.md               # สารบัญและคำอธิบายไดอะแกรม
+│   ├── view_diagrams.html      # หน้าเว็บสำหรับเปิดดูทุกไดอะแกรมแบบกราฟิกสวยงาม (Interactive)
+│   ├── 01_erd_database.md      # แผนภาพความสัมพันธ์ฐานข้อมูล ERD (11 ตาราง - 3NF)
+│   ├── 02_system_architecture.md # แผนภาพสถาปัตยกรรมระบบ (Client-Server-DB-Storage)
+│   ├── 03_purchase_and_download_flow.md # แผนผังกระบวนการสั่งซื้อและดาวน์โหลดของลูกค้า
+│   ├── 04_admin_verification_flow.md    # แผนผังกระบวนการตรวจสลิปและอนุมัติของแอดมิน
+│   └── 05_data_flow_diagram.md # แผนภาพกระแสข้อมูล DFD Level 0 & Level 1
 ├── static/                     # ไฟล์ Static สำหรับหน้าเว็บ
 │   ├── css/custom.css          # ไฟล์ตกแต่ง CSS ดีไซน์ทันสมัย Responsive
 │   ├── downloads/              # โฟลเดอร์เก็บไฟล์ E-Book ตัวอย่าง (PDF)
