@@ -12,7 +12,7 @@ class EbookStoreTestCase(unittest.TestCase):
     def test_01_homepage_loads(self):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn('E-Book Store'.encode('utf-8'), response.data)
+        self.assertIn('Lampara'.encode('utf-8'), response.data)
 
     def test_02_login_and_logout(self):
         # Test Admin Login
@@ -35,6 +35,12 @@ class EbookStoreTestCase(unittest.TestCase):
         # Add book #1 to cart
         res_add = self.client.post('/cart/add/1', follow_redirects=True)
         self.assertEqual(res_add.status_code, 200)
+
+    def test_03b_route_guard_403(self):
+        # Access admin without logging in as admin
+        res_unauth = self.client.get('/admin')
+        self.assertEqual(res_unauth.status_code, 403)
+        self.assertIn('403 ACCESS DENIED'.encode('utf-8'), res_unauth.data)
 
     def test_04_admin_dashboard_and_reports(self):
         # Login as Admin

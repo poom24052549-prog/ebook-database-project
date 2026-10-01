@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}ชำระเงิน - E-Book Store{% endblock %}
+{% block title %}สั่งซื้อและชำระเงิน (Checkout) - Lampara Books{% endblock %}
 
 {% block content %}
 <div class="row">
     <div class="col-lg-7 mb-4">
         <div class="card shadow-sm border-0 rounded-4 p-4 bg-white">
             <h3 class="fw-bold mb-3 border-bottom pb-2">
-                <i class="bi bi-wallet2 text-primary me-2"></i>เลือกวิธีชำระเงิน (แบบจำลอง)
+                <i class="bi bi-credit-card-2-front text-warning me-2"></i>สั่งซื้อและชำระเงิน (Checkout)
             </h3>
 
             <!-- Notice for academic project requirement -->
@@ -40,7 +40,7 @@
                                 <div class="d-inline-block p-2 bg-white rounded border shadow-sm">
                                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=PROMPTPAY-MOCK-EBOOK-STORE-{{ total_amount }}" alt="PromptPay QR Code" class="img-fluid" style="width: 160px; height: 160px;">
                                 </div>
-                                <div class="mt-2 small fw-semibold text-dark">ชื่อบัญชี: ร้านขาย E-Book ออนไลน์ (จำลอง)</div>
+                                <div class="mt-2 small fw-semibold text-dark">ชื่อบัญชี: ร้านขายหนังสือและอีบุ๊กออนไลน์ Lampara Books (จำลอง)</div>
                                 <div class="small text-muted">พร้อมเพย์: 089-999-9999</div>
                             </div>
                         </div>
