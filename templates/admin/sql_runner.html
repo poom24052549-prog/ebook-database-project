@@ -1,0 +1,407 @@
+{% extends 'admin/base_admin.html' %}
+
+{% block title %}รัน SQL ดึงข้อมูลจากตาราง (SQL Console) - ผู้ดูแลระบบ{% endblock %}
+
+{% block extra_head %}
+<style>
+    .sql-editor {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+        font-size: 0.95rem;
+        background-color: #1e293b;
+        color: #f8fafc;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        line-height: 1.5;
+        border: 1px solid #334155;
+    }
+    .sql-editor:focus {
+        background-color: #0f172a;
+        color: #ffffff;
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
+    }
+    .table-explorer-list {
+        max-height: 580px;
+        overflow-y: auto;
+    }
+    .query-result-table th {
+        background-color: #f1f5f9;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        white-space: nowrap;
+    }
+    .query-result-table td {
+        font-size: 0.88rem;
+        white-space: nowrap;
+        max-width: 320px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .preset-pill {
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 0.8rem;
+    }
+    .preset-pill:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<!-- Header Bar -->
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-3 mb-4 border-bottom">
+    <div>
+        <h2 class="h3 fw-bold mb-1">
+            <i class="bi bi-terminal-split text-info me-2"></i>เครื่องมือรัน SQL ดึงข้อมูลจากตาราง (SQL Console)
+        </h2>
+        <p class="text-muted small mb-0">
+            พิมพ์คำสั่ง SQL เพื่อดึงข้อมูล สำรวจความสัมพันธ์ หรือทดสอบ Query ในฐานข้อมูล SQLite3 (11 ตาราง - 3NF)
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">
+            <i class="bi bi-database me-1"></i>SQLite3 Relational DB
+        </span>
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-2">
+            <i class="bi bi-grid-3x3 me-1"></i>{{ tables_meta|length }} ตาราง
+        </span>
+    </div>
+</div>
+
+<!-- Preset Quick Queries -->
+<div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-4">
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <i class="bi bi-lightning-charge-fill text-warning"></i>
+        <span class="fw-bold small text-uppercase text-muted" style="letter-spacing: 0.5px;">ตัวอย่างคำสั่ง SQL ยอดนิยม (คลิกเพื่อนำไปใช้):</span>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill preset-pill" 
+                onclick="setQuery('SELECT b.ebook_id, b.title, c.category_name, a.author_name, b.price, b.is_active FROM ebooks b JOIN authors a ON b.author_id = a.author_id JOIN categories c ON b.category_id = c.category_id ORDER BY b.ebook_id ASC;')">
+            📚 หนังสือ + ผู้แต่ง + หมวดหมู่
+        </button>
+        <button type="button" class="btn btn-outline-success btn-sm rounded-pill preset-pill"
+                onclick="setQuery('SELECT o.order_id, o.order_number, u.username, u.full_name, o.total_amount, o.status, p.payment_method, p.payment_status, o.order_date FROM orders o JOIN users u ON o.user_id = u.user_id LEFT JOIN payments p ON o.order_id = p.order_id ORDER BY o.order_id DESC LIMIT 20;')">
+            🛒 คำสั่งซื้อล่าสุด + สลิป
+        </button>
+        <button type="button" class="btn btn-outline-info btn-sm rounded-pill preset-pill"
+                onclick="setQuery('SELECT c.category_name, COUNT(DISTINCT o.order_id) as total_orders, SUM(oi.quantity) as items_sold, ROUND(SUM(oi.subtotal), 2) as category_revenue FROM categories c JOIN ebooks b ON c.category_id = b.category_id JOIN order_items oi ON b.ebook_id = oi.ebook_id JOIN orders o ON oi.order_id = o.order_id WHERE o.status = \'CONFIRMED\' GROUP BY c.category_id, c.category_name ORDER BY category_revenue DESC;')">
+            📊 ยอดขายแยกตามหมวดหมู่
+        </button>
+        <button type="button" class="btn btn-outline-warning btn-sm rounded-pill preset-pill"
+                onclick="setQuery('SELECT u.user_id, u.username, u.full_name, u.email, COUNT(o.order_id) as total_orders, ROUND(SUM(o.total_amount), 2) as total_spent FROM users u LEFT JOIN orders o ON u.user_id = o.user_id WHERE u.role_id = 1 GROUP BY u.user_id, u.username, u.full_name, u.email HAVING total_orders >= 1 ORDER BY total_spent DESC;')">
+            👥 ยอดซื้อสะสมของลูกค้า
+        </button>
+        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill preset-pill"
+                onclick="setQuery('SELECT o.status, COUNT(o.order_id) as order_count, ROUND(SUM(o.total_amount), 2) as total_amount, ROUND(AVG(o.total_amount), 2) as avg_amount FROM orders o GROUP BY o.status;')">
+            📈 สรุปสถานะคำสั่งซื้อ
+        </button>
+        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill preset-pill"
+                onclick="setQuery('SELECT dl.download_id, u.username, b.title, dl.download_token, dl.download_count, dl.is_active FROM download_links dl JOIN users u ON dl.user_id = u.user_id JOIN ebooks b ON dl.ebook_id = b.ebook_id ORDER BY dl.download_id DESC LIMIT 20;')">
+            🔑 สิทธิ์ดาวน์โหลด & Tokens
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Table Explorer (สำรวจโครงสร้างตาราง) -->
+    <div class="col-lg-3">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                <span class="fw-bold small text-uppercase text-secondary">
+                    <i class="bi bi-folder2-open me-1"></i>โครงสร้างตาราง ({{ tables_meta|length }})
+                </span>
+                <span class="text-muted small">คลิกเพื่อดูข้อมูล</span>
+            </div>
+
+            <div class="table-explorer-list pe-1">
+                <div class="accordion accordion-flush" id="tablesAccordion">
+                    {% for t in tables_meta %}
+                    <div class="accordion-item border-0 mb-2 rounded-3 bg-light overflow-hidden">
+                        <h2 class="accordion-header d-flex align-items-center justify-content-between px-3 py-2" id="heading-{{ t.name }}">
+                            <a href="{{ url_for('admin_sql', table=t.name) }}" class="text-decoration-none text-dark fw-bold small text-truncate me-2" title="ดึงข้อมูลจากตาราง {{ t.name }}">
+                                <i class="bi bi-table text-primary me-1"></i>{{ t.name }}
+                            </a>
+                            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                <span class="badge bg-secondary-subtle text-secondary rounded-pill font-monospace" style="font-size: 0.7rem;">
+                                    {{ t.count }}
+                                </span>
+                                <button class="btn btn-link btn-sm p-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ t.name }}" title="ดู Schema คอลัมน์">
+                                    <i class="bi bi-chevron-down" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        </h2>
+                        <div id="collapse-{{ t.name }}" class="accordion-collapse collapse" data-bs-parent="#tablesAccordion">
+                            <div class="accordion-body p-2 pt-0 bg-white border-top">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless font-monospace mb-0" style="font-size: 0.75rem;">
+                                        <thead>
+                                            <tr class="text-muted border-bottom">
+                                                <th>คอลัมน์</th>
+                                                <th>ประเภท</th>
+                                                <th>PK</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for col in t.columns %}
+                                            <tr>
+                                                <td class="text-dark fw-semibold">
+                                                    {{ col['name'] }}
+                                                    {% if col['notnull'] == 1 %}<span class="text-danger" title="NOT NULL">*</span>{% endif %}
+                                                </td>
+                                                <td class="text-muted">{{ col['type'] or 'ANY' }}</td>
+                                                <td>
+                                                    {% if col['pk'] == 1 %}
+                                                    <span class="badge bg-warning text-dark px-1">PK</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-2 text-end">
+                                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 rounded-pill" style="font-size: 0.7rem;"
+                                            onclick="setQuery('SELECT * FROM {{ t.name }} LIMIT 50;')">
+                                        <i class="bi bi-play me-1"></i>SELECT *
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: SQL Query Editor & Result Area -->
+    <div class="col-lg-9">
+        <!-- SQL Editor Form -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <form method="POST" action="{{ url_for('admin_sql') }}" id="sqlForm">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label for="query" class="form-label fw-bold mb-0">
+                        <i class="bi bi-code-slash text-primary me-1"></i>SQL Query Console:
+                    </label>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="clearEditor()">
+                            <i class="bi bi-eraser me-1"></i>ล้าง
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm rounded-pill px-3" onclick="formatSQL()">
+                            <i class="bi bi-magic me-1"></i>จัดรูปแบบ
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <textarea class="form-control sql-editor" id="query" name="query" rows="5" 
+                              placeholder="พิมพ์คำสั่ง SQL เช่น SELECT * FROM ebooks WHERE price > 300;" 
+                              spellcheck="false" required>{{ query }}</textarea>
+                    <div class="form-text d-flex justify-content-between mt-1">
+                        <span><i class="bi bi-info-circle me-1"></i>คำแนะนำ: สามารถใช้คีย์ลัด <kbd>Ctrl</kbd> + <kbd>Enter</kbd> เพื่อรันคำสั่งได้ทันที</span>
+                        <span class="text-muted">รองรับคำสั่ง SELECT, PRAGMA, EXPLAIN, JOIN, GROUP BY, HAVING</span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                            <i class="bi bi-play-fill me-1 fs-5 align-middle"></i>รันคำสั่ง SQL (Run Query)
+                        </button>
+                    </div>
+
+                    {% if rows and columns %}
+                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" onclick="submitExport()">
+                        <i class="bi bi-file-earmark-spreadsheet me-1"></i>ส่งออกผลลัพธ์เป็น CSV
+                    </button>
+                    {% endif %}
+                </div>
+            </form>
+
+            <!-- Hidden export form -->
+            <form method="POST" action="{{ url_for('admin_sql_export') }}" id="exportForm" class="d-none">
+                <input type="hidden" name="query" id="exportQuery" value="{{ query }}">
+            </form>
+        </div>
+
+        <!-- Query Execution Error Message -->
+        {% if error_message %}
+        <div class="alert alert-danger border-0 shadow-sm rounded-4 p-4 mb-4" role="alert">
+            <div class="d-flex align-items-start gap-3">
+                <i class="bi bi-exclamation-triangle-fill fs-3 text-danger flex-shrink-0"></i>
+                <div class="w-100">
+                    <h5 class="alert-heading fw-bold mb-1">เกิดข้อผิดพลาดในการประมวลผล SQL (Query Error)</h5>
+                    <p class="font-monospace small mb-2 text-danger-emphasis">{{ error_message }}</p>
+                    <div class="text-muted small">
+                        <i class="bi bi-lightbulb me-1"></i>กรุณาตรวจสอบชื่อตาราง, ชื่อคอลัมน์ หรือไวยากรณ์ของคำสั่ง SQL อีกครั้ง
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Query Results Section -->
+        {% if is_select and columns %}
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-table text-success me-2"></i>ผลลัพธ์การสืบค้น (Query Result)
+                    </h5>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3">
+                        <i class="bi bi-check2-circle me-1"></i>{{ row_count }} แถว (Rows)
+                    </span>
+                    <span class="badge bg-light text-muted border rounded-pill px-3">
+                        <i class="bi bi-stopwatch me-1"></i>{{ exec_time_ms }} ms
+                    </span>
+                </div>
+
+                <!-- Live Client Search in Results -->
+                <div class="input-group input-group-sm" style="max-width: 250px;">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" id="filterResultInput" 
+                           placeholder="ค้นหาในผลลัพธ์..." onkeyup="filterResultTable()">
+                </div>
+            </div>
+
+            <!-- Table Responsive Container -->
+            <div class="table-responsive rounded-3 border" style="max-height: 520px; overflow-y: auto;">
+                <table class="table table-hover table-striped query-result-table mb-0 align-middle" id="resultTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center" style="width: 50px;">#</th>
+                            {% for col in columns %}
+                            <th>{{ col }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if rows %}
+                            {% for row in rows %}
+                            <tr>
+                                <td class="text-center text-muted font-monospace small">{{ loop.index }}</td>
+                                {% for col in columns %}
+                                <td>
+                                    {% set val = row[col] %}
+                                    {% if val is none %}
+                                        <span class="badge bg-light text-secondary font-monospace" style="font-size: 0.75rem;">NULL</span>
+                                    {% elif 'slip' in col|lower and (val|string).endswith('.svg') or (val|string).endswith('.png') or (val|string).endswith('.jpg') %}
+                                        <a href="{{ val }}" target="_blank" class="btn btn-outline-info btn-sm py-0 px-2 rounded-pill" title="ดูรูปภาพ">
+                                            <i class="bi bi-image me-1"></i>ดูรูปสลิป
+                                        </a>
+                                    {% elif 'token' in col|lower %}
+                                        <span class="font-monospace small text-primary" title="{{ val }}">{{ val[:12] }}...</span>
+                                    {% elif 'password' in col|lower %}
+                                        <span class="text-muted small font-monospace">•••••••• (Hashed)</span>
+                                    {% elif 'created_at' in col|lower or 'order_date' in col|lower or 'payment_date' in col|lower %}
+                                        <span class="font-monospace small text-secondary">{{ val }}</span>
+                                    {% elif 'status' in col|lower %}
+                                        {% if val == 'CONFIRMED' or val == 'VERIFIED' %}
+                                            <span class="badge bg-success-subtle text-success">{{ val }}</span>
+                                        {% elif val == 'PENDING' %}
+                                            <span class="badge bg-warning-subtle text-warning">{{ val }}</span>
+                                        {% elif val == 'CANCELLED' or val == 'REJECTED' %}
+                                            <span class="badge bg-danger-subtle text-danger">{{ val }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary">{{ val }}</span>
+                                        {% endif %}
+                                    {% elif 'amount' in col|lower or 'price' in col|lower or 'revenue' in col|lower or 'total' in col|lower or 'spent' in col|lower %}
+                                        <span class="fw-bold font-monospace">{{ val }}</span>
+                                    {% else %}
+                                        <span>{{ val }}</span>
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="{{ columns|length + 1 }}" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                                    ไม่พบข้อมูลที่ตรงกับเงื่อนไขในคำสั่ง SQL นี้ (0 Rows Returned)
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% elif not error_message and query %}
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center py-5">
+            <i class="bi bi-check-circle-fill text-success fs-1 mb-2"></i>
+            <h5 class="fw-bold">ดำเนินการคำสั่ง SQL เรียบร้อยแล้ว</h5>
+            <p class="text-muted small mb-0">มีผลกระทบ {{ row_count }} แถวในฐานข้อมูล</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    // Set query in textarea and submit form
+    function setQuery(sql) {
+        const editor = document.getElementById('query');
+        editor.value = sql;
+        document.getElementById('exportQuery').value = sql;
+        document.getElementById('sqlForm').submit();
+    }
+
+    // Clear editor
+    function clearEditor() {
+        const editor = document.getElementById('query');
+        editor.value = '';
+        editor.focus();
+    }
+
+    // Simple SQL formatter for readability
+    function formatSQL() {
+        const editor = document.getElementById('query');
+        let sql = editor.value.trim();
+        if (!sql) return;
+
+        const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT JOIN', 'INNER JOIN', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'INSERT INTO', 'UPDATE', 'SET', 'VALUES', 'DELETE FROM'];
+        keywords.forEach(kw => {
+            const regex = new RegExp('\\b' + kw + '\\b', 'gi');
+            sql = sql.replace(regex, '\n' + kw);
+        });
+        editor.value = sql.trim();
+    }
+
+    // Submit CSV export form
+    function submitExport() {
+        const editor = document.getElementById('query');
+        document.getElementById('exportQuery').value = editor.value.trim();
+        document.getElementById('exportForm').submit();
+    }
+
+    // Keyboard shortcut: Ctrl + Enter to run query
+    document.getElementById('query').addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('sqlForm').submit();
+        }
+    });
+
+    // Realtime filter rows in result table
+    function filterResultTable() {
+        const input = document.getElementById('filterResultInput');
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById('resultTable');
+        const trs = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+        for (let i = 0; i < trs.length; i++) {
+            const rowText = trs[i].textContent || trs[i].innerText;
+            if (rowText.toLowerCase().indexOf(filter) > -1) {
+                trs[i].style.display = '';
+            } else {
+                trs[i].style.display = 'none';
+            }
+        }
+    }
+</script>
+{% endblock %}

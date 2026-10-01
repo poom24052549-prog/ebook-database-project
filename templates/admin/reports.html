@@ -32,6 +32,11 @@
             <i class="bi bi-people me-1"></i> 4. ลูกค้าและคำสั่งซื้อ
         </button>
     </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link rounded-pill px-4 bg-info-subtle text-info-emphasis border border-info fw-bold" id="r5-tab" data-bs-toggle="pill" data-bs-target="#report5" type="button" role="tab">
+            <i class="bi bi-terminal-split me-1 text-primary"></i> 5. เขียน SQL ดึงข้อมูลจากตาราง (SQL Console)
+        </button>
+    </li>
 </ul>
 
 <div class="tab-content" id="reportTabsContent">
@@ -51,7 +56,13 @@
 
             <!-- SQL Query Reference Box -->
             <div class="p-3 bg-light rounded-3 mb-4 font-monospace small border">
-                <div class="text-secondary fw-bold mb-1"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="text-secondary fw-bold"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0" style="font-size: 0.8rem;" 
+                            onclick="loadToSqlConsole('SELECT strftime(\'%Y-%m\', o.order_date) AS period_month, COUNT(o.order_id) AS total_orders, ROUND(SUM(o.total_amount), 2) AS total_sales, ROUND(AVG(o.total_amount), 2) AS average_order_value FROM orders o JOIN payments p ON o.order_id = p.order_id WHERE o.status = \'CONFIRMED\' GROUP BY strftime(\'%Y-%m\', o.order_date) ORDER BY period_month ASC;')">
+                        <i class="bi bi-pencil-square me-1"></i>แก้ไข & รันคำสั่ง SQL นี้
+                    </button>
+                </div>
                 <span class="text-primary">SELECT</span> strftime('%Y-%m', o.order_date) AS period_month, 
                 <span class="text-primary">COUNT</span>(o.order_id) AS total_orders, 
                 <span class="text-primary">ROUND</span>(<span class="text-primary">SUM</span>(o.total_amount), 2) AS total_sales, 
@@ -136,7 +147,13 @@
 
             <!-- SQL Query Reference Box -->
             <div class="p-3 bg-light rounded-3 mb-4 font-monospace small border">
-                <div class="text-secondary fw-bold mb-1"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="text-secondary fw-bold"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0" style="font-size: 0.8rem;" 
+                            onclick="loadToSqlConsole('SELECT b.ebook_id, b.title, c.category_name, a.author_name, b.price, SUM(oi.quantity) AS total_copies_sold, ROUND(SUM(oi.subtotal), 2) AS total_revenue FROM order_items oi JOIN orders o ON oi.order_id = o.order_id JOIN ebooks b ON oi.ebook_id = b.ebook_id WHERE o.status = \'CONFIRMED\' GROUP BY b.ebook_id ORDER BY total_copies_sold DESC LIMIT 10;')">
+                        <i class="bi bi-pencil-square me-1"></i>แก้ไข & รันคำสั่ง SQL นี้
+                    </button>
+                </div>
                 <span class="text-primary">SELECT</span> b.ebook_id, b.title, c.category_name, a.author_name, b.price, 
                 <span class="text-primary">SUM</span>(oi.quantity) AS total_copies_sold, 
                 <span class="text-primary">ROUND</span>(<span class="text-primary">SUM</span>(oi.subtotal), 2) AS total_revenue<br>
@@ -207,7 +224,13 @@
 
             <!-- SQL Query Reference Box -->
             <div class="p-3 bg-light rounded-3 mb-4 font-monospace small border">
-                <div class="text-secondary fw-bold mb-1"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="text-secondary fw-bold"><i class="bi bi-terminal me-1"></i>SQL Query ที่ใช้:</div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0" style="font-size: 0.8rem;" 
+                            onclick="loadToSqlConsole('SELECT c.category_id, c.category_name, COUNT(DISTINCT o.order_id) AS total_orders, SUM(oi.quantity) AS total_items_sold, ROUND(SUM(oi.subtotal), 2) AS category_revenue, ROUND(SUM(oi.subtotal) * 100.0 / (SELECT SUM(subtotal) FROM order_items oi2 JOIN orders o2 ON oi2.order_id = o2.order_id WHERE o2.status = \'CONFIRMED\'), 2) AS revenue_share_percent FROM categories c JOIN ebooks b ON c.category_id = b.category_id JOIN order_items oi ON b.ebook_id = oi.ebook_id JOIN orders o ON oi.order_id = o.order_id WHERE o.status = \'CONFIRMED\' GROUP BY c.category_id, c.category_name ORDER BY category_revenue DESC;')">
+                        <i class="bi bi-pencil-square me-1"></i>แก้ไข & รันคำสั่ง SQL นี้
+                    </button>
+                </div>
                 <span class="text-primary">SELECT</span> c.category_id, c.category_name, 
                 <span class="text-primary">COUNT</span>(<span class="text-primary">DISTINCT</span> o.order_id) AS total_orders, 
                 <span class="text-primary">SUM</span>(oi.quantity) AS total_items_sold, 
@@ -272,7 +295,13 @@
 
             <!-- SQL Query Reference Box -->
             <div class="p-3 bg-light rounded-3 mb-4 font-monospace small border">
-                <div class="text-secondary fw-bold mb-1"><i class="bi bi-terminal me-1"></i>SQL Query 4A (ลูกค้าชั้นยอดพร้อม HAVING):</div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="text-secondary fw-bold"><i class="bi bi-terminal me-1"></i>SQL Query 4A (ลูกค้าชั้นยอดพร้อม HAVING):</div>
+                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-0" style="font-size: 0.8rem;" 
+                            onclick="loadToSqlConsole('SELECT u.user_id, u.username, u.full_name, u.email, COUNT(o.order_id) AS total_confirmed_orders, ROUND(SUM(o.total_amount), 2) AS total_spent, ROUND(AVG(o.total_amount), 2) AS avg_order_spend FROM users u JOIN orders o ON u.user_id = o.user_id WHERE o.status = \'CONFIRMED\' GROUP BY u.user_id, u.username, u.full_name, u.email HAVING COUNT(o.order_id) >= 1 ORDER BY total_spent DESC;')">
+                        <i class="bi bi-pencil-square me-1"></i>แก้ไข & รันคำสั่ง SQL นี้
+                    </button>
+                </div>
                 <span class="text-primary">SELECT</span> u.user_id, u.username, u.full_name, u.email, 
                 <span class="text-primary">COUNT</span>(o.order_id) AS total_confirmed_orders, 
                 <span class="text-primary">ROUND</span>(<span class="text-primary">SUM</span>(o.total_amount), 2) AS total_spent<br>
@@ -348,6 +377,198 @@
                         {% endfor %}
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT 5: INTERACTIVE CUSTOM SQL QUERY CONSOLE -->
+    <div class="tab-pane fade" id="report5" role="tabpanel">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 pb-2 border-bottom">
+                <div>
+                    <h4 class="fw-bold mb-1">
+                        <i class="bi bi-terminal-split text-info me-2"></i>เครื่องมือเขียนและรันคำสั่ง SQL ดึงข้อมูลจากตาราง (Custom SQL Console)
+                    </h4>
+                    <span class="text-muted small">
+                        พิมพ์คำสั่ง SQL เพื่อดึงข้อมูล วิเคราะห์ หรือสำรวจตารางในฐานข้อมูล SQLite3 (11 ตาราง - 3NF) ได้แบบเรียลไทม์
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">
+                        <i class="bi bi-database me-1"></i>ebook_store.db
+                    </span>
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-3 py-2">
+                        <i class="bi bi-grid-3x3 me-1"></i>{{ tables_meta|length }} ตาราง
+                    </span>
+                </div>
+            </div>
+
+            <!-- Quick SQL Presets -->
+            <div class="mb-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-lightning-charge-fill text-warning"></i>
+                    <span class="fw-bold small text-uppercase text-muted" style="font-size: 0.78rem;">ตัวอย่างคำสั่ง SQL ดึงข้อมูลจากตาราง (คลิกเพื่อโหลดและรันทันที):</span>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" style="font-size: 0.8rem;"
+                            onclick="loadToSqlConsole('SELECT b.ebook_id, b.title, c.category_name, a.author_name, b.price, b.is_active FROM ebooks b JOIN authors a ON b.author_id = a.author_id JOIN categories c ON b.category_id = c.category_id ORDER BY b.ebook_id ASC;')">
+                        📚 E-Books + ผู้แต่ง + หมวดหมู่
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm rounded-pill" style="font-size: 0.8rem;"
+                            onclick="loadToSqlConsole('SELECT o.order_id, o.order_number, u.username, u.full_name, o.total_amount, o.status, p.payment_method, p.payment_status, p.slip_image, o.order_date FROM orders o JOIN users u ON o.user_id = u.user_id LEFT JOIN payments p ON o.order_id = p.order_id ORDER BY o.order_id DESC LIMIT 20;')">
+                        🛒 คำสั่งซื้อล่าสุด + สลิป
+                    </button>
+                    <button type="button" class="btn btn-outline-info btn-sm rounded-pill" style="font-size: 0.8rem;"
+                            onclick="loadToSqlConsole('SELECT c.category_name, COUNT(DISTINCT o.order_id) as total_orders, SUM(oi.quantity) as items_sold, ROUND(SUM(oi.subtotal), 2) as category_revenue FROM categories c JOIN ebooks b ON c.category_id = b.category_id JOIN order_items oi ON b.ebook_id = oi.ebook_id JOIN orders o ON oi.order_id = o.order_id WHERE o.status = \'CONFIRMED\' GROUP BY c.category_id, c.category_name ORDER BY category_revenue DESC;')">
+                        📊 ยอดขายแยกตามหมวดหมู่
+                    </button>
+                    <button type="button" class="btn btn-outline-warning btn-sm rounded-pill" style="font-size: 0.8rem;"
+                            onclick="loadToSqlConsole('SELECT u.user_id, u.username, u.full_name, u.email, COUNT(o.order_id) as total_orders, ROUND(SUM(o.total_amount), 2) as total_spent FROM users u LEFT JOIN orders o ON u.user_id = o.user_id WHERE u.role_id = 1 GROUP BY u.user_id, u.username, u.full_name, u.email HAVING total_orders >= 1 ORDER BY total_spent DESC;')">
+                        👥 ยอดซื้อสะสมลูกค้า (HAVING)
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill" style="font-size: 0.8rem;"
+                            onclick="loadToSqlConsole('SELECT o.status, COUNT(o.order_id) as order_count, ROUND(SUM(o.total_amount), 2) as total_amount, ROUND(AVG(o.total_amount), 2) as avg_amount FROM orders o GROUP BY o.status;')">
+                        📈 สรุปสถานะคำสั่งซื้อ
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" style="font-size: 0.8rem;"
+                            onclick="loadToSqlConsole('SELECT dl.download_id, u.username, b.title, dl.download_token, dl.download_count, dl.is_active FROM download_links dl JOIN users u ON dl.user_id = u.user_id JOIN ebooks b ON dl.ebook_id = b.ebook_id ORDER BY dl.download_id DESC LIMIT 20;')">
+                        🔑 สิทธิ์ดาวน์โหลด & Tokens
+                    </button>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <!-- Left: Table Explorer -->
+                <div class="col-lg-3">
+                    <div class="card border bg-light rounded-3 p-3 h-100">
+                        <div class="fw-bold small text-uppercase text-secondary mb-2 d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-folder2-open me-1"></i>โครงสร้าง 11 ตาราง</span>
+                            <span class="text-muted" style="font-size: 0.72rem;">คลิกดูข้อมูล</span>
+                        </div>
+                        <div style="max-height: 480px; overflow-y: auto;">
+                            <div class="accordion accordion-flush" id="reportsTablesAccordion">
+                                {% for t in tables_meta %}
+                                <div class="accordion-item border-0 mb-1 rounded bg-white overflow-hidden shadow-sm">
+                                    <h2 class="accordion-header d-flex align-items-center justify-content-between px-2 py-1" id="rh-{{ t.name }}">
+                                        <button type="button" class="btn btn-link btn-sm p-0 text-dark fw-bold text-decoration-none text-truncate" 
+                                                onclick="loadToSqlConsole('SELECT * FROM {{ t.name }} LIMIT 50;')" title="ดึงข้อมูล {{ t.name }}">
+                                            <i class="bi bi-table text-primary me-1" style="font-size: 0.8rem;"></i>{{ t.name }}
+                                        </button>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="badge bg-secondary-subtle text-secondary rounded-pill font-monospace" style="font-size: 0.65rem;">
+                                                {{ t.count }}
+                                            </span>
+                                            <button class="btn btn-link btn-sm p-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#rc-{{ t.name }}">
+                                                <i class="bi bi-chevron-down" style="font-size: 0.7rem;"></i>
+                                            </button>
+                                        </div>
+                                    </h2>
+                                    <div id="rc-{{ t.name }}" class="accordion-collapse collapse" data-bs-parent="#reportsTablesAccordion">
+                                        <div class="p-2 border-top bg-light" style="font-size: 0.72rem;">
+                                            <ul class="list-unstyled mb-1 font-monospace">
+                                                {% for col in t.columns %}
+                                                <li class="text-truncate">
+                                                    <span class="fw-semibold text-dark">{{ col['name'] }}</span>
+                                                    <span class="text-muted">({{ col['type'] or 'ANY' }})</span>
+                                                    {% if col['pk'] == 1 %}<span class="badge bg-warning text-dark px-1">PK</span>{% endif %}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                            <button type="button" class="btn btn-xs btn-outline-primary w-100 rounded-pill py-0" style="font-size: 0.7rem;"
+                                                    onclick="loadToSqlConsole('SELECT * FROM {{ t.name }} LIMIT 50;')">
+                                                <i class="bi bi-play me-1"></i>SELECT *
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: SQL Editor & Live Result -->
+                <div class="col-lg-9">
+                    <!-- Textarea Editor -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="customSqlQuery" class="form-label fw-bold mb-0 text-dark small">
+                                <i class="bi bi-code-slash text-primary me-1"></i>พิมพ์คำสั่ง SQL (SQL Query Console):
+                            </label>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2 rounded-pill" style="font-size: 0.75rem;" onclick="clearCustomEditor()">
+                                    <i class="bi bi-eraser me-1"></i>ล้าง
+                                </button>
+                                <button type="button" class="btn btn-outline-info btn-sm py-0 px-2 rounded-pill" style="font-size: 0.75rem;" onclick="formatCustomSQL()">
+                                    <i class="bi bi-magic me-1"></i>จัดรูปแบบ
+                                </button>
+                            </div>
+                        </div>
+                        <textarea class="form-control font-monospace" id="customSqlQuery" rows="5"
+                                  style="background-color: #1e293b; color: #f8fafc; border-radius: 0.75rem; border: 1px solid #334155; font-size: 0.92rem; line-height: 1.5;"
+                                  placeholder="พิมพ์คำสั่ง SQL เช่น SELECT * FROM ebooks WHERE price > 300;" spellcheck="false">SELECT b.ebook_id, b.title, c.category_name, a.author_name, b.price, b.is_active FROM ebooks b JOIN authors a ON b.author_id = a.author_id JOIN categories c ON b.category_id = c.category_id ORDER BY b.ebook_id ASC;</textarea>
+                        <div class="form-text d-flex justify-content-between mt-1 small">
+                            <span><i class="bi bi-info-circle me-1"></i>กดปุ่มลัด <kbd>Ctrl</kbd> + <kbd>Enter</kbd> เพื่อรันคำสั่งได้ทันที</span>
+                            <span class="text-muted">ดึงข้อมูลสดจาก SQLite3 โดยไม่ต้องรีโหลดหน้าเว็บ</span>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" id="btnRunCustomSql" onclick="executeCustomSQL()">
+                            <i class="bi bi-play-fill me-1 fs-5 align-middle"></i>รันคำสั่ง SQL (Run Query)
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm rounded-pill px-3" id="btnExportCustomCsv" onclick="exportCustomCSV()" style="display: none;">
+                            <i class="bi bi-file-earmark-spreadsheet me-1"></i>ส่งออกผลลัพธ์เป็น CSV
+                        </button>
+                    </div>
+
+                    <!-- Hidden export form for CSV -->
+                    <form method="POST" action="{{ url_for('admin_sql_export') }}" id="reportsExportForm" class="d-none">
+                        <input type="hidden" name="query" id="reportsExportQuery" value="">
+                    </form>
+
+                    <!-- Alert for Error -->
+                    <div id="customSqlError" class="alert alert-danger border-0 shadow-sm rounded-3 p-3 mb-3" style="display: none;">
+                        <div class="d-flex align-items-start gap-2">
+                            <i class="bi bi-exclamation-triangle-fill fs-4 text-danger flex-shrink-0"></i>
+                            <div>
+                                <div class="fw-bold mb-1">เกิดข้อผิดพลาดในการรัน SQL:</div>
+                                <div class="font-monospace small text-danger-emphasis" id="customSqlErrorMsg"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="customSqlLoading" class="text-center py-4 text-secondary" style="display: none;">
+                        <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                        <span class="small font-monospace">กำลังประมวลผลคำสั่ง SQL...</span>
+                    </div>
+
+                    <!-- Results Table Area -->
+                    <div id="customSqlResultContainer" class="border rounded-3 p-3 bg-light" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2 pb-2 border-bottom">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-bold small text-dark"><i class="bi bi-table text-success me-1"></i>ผลลัพธ์:</span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3" id="customSqlRowCountBadge">0 แถว</span>
+                                <span class="badge bg-light text-muted border rounded-pill px-3" id="customSqlTimeBadge">0 ms</span>
+                            </div>
+                            <div class="input-group input-group-sm" style="max-width: 220px;">
+                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                <input type="text" class="form-control" id="customSqlFilterInput" placeholder="ค้นหาในผลลัพธ์..." onkeyup="filterCustomSqlTable()">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive rounded bg-white border" style="max-height: 420px; overflow-y: auto;">
+                            <table class="table table-hover table-striped table-sm mb-0 align-middle font-monospace" style="font-size: 0.84rem;" id="customSqlResultTable">
+                                <thead class="table-light sticky-top">
+                                    <tr id="customSqlTableHead"></tr>
+                                </thead>
+                                <tbody id="customSqlTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -428,6 +649,169 @@ new Chart(document.getElementById('r3Chart'), {
         plugins: {
             legend: { position: 'right' }
         }
+    }
+});
+
+// -------------------------------------------------------------
+// Interactive Custom SQL Query Runner in Reports Page
+// -------------------------------------------------------------
+function loadToSqlConsole(sql) {
+    const tabBtn = document.getElementById('r5-tab');
+    if (tabBtn) {
+        const tab = new bootstrap.Tab(tabBtn);
+        tab.show();
+    }
+    const editor = document.getElementById('customSqlQuery');
+    if (editor) {
+        editor.value = sql;
+        executeCustomSQL();
+    }
+}
+
+function clearCustomEditor() {
+    const editor = document.getElementById('customSqlQuery');
+    if (editor) {
+        editor.value = '';
+        editor.focus();
+    }
+}
+
+function formatCustomSQL() {
+    const editor = document.getElementById('customSqlQuery');
+    if (!editor) return;
+    let sql = editor.value.trim();
+    if (!sql) return;
+    const keywords = ['SELECT', 'FROM', 'WHERE', 'JOIN', 'LEFT JOIN', 'INNER JOIN', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'INSERT INTO', 'UPDATE', 'SET', 'VALUES', 'DELETE FROM'];
+    keywords.forEach(kw => {
+        const regex = new RegExp('\\b' + kw + '\\b', 'gi');
+        sql = sql.replace(regex, '\n' + kw);
+    });
+    editor.value = sql.trim();
+}
+
+function exportCustomCSV() {
+    const query = document.getElementById('customSqlQuery').value.trim();
+    if (!query) return;
+    document.getElementById('reportsExportQuery').value = query;
+    document.getElementById('reportsExportForm').submit();
+}
+
+function executeCustomSQL() {
+    const editor = document.getElementById('customSqlQuery');
+    if (!editor) return;
+    const query = editor.value.trim();
+    if (!query) return;
+
+    const errorDiv = document.getElementById('customSqlError');
+    const errorMsg = document.getElementById('customSqlErrorMsg');
+    const loadingDiv = document.getElementById('customSqlLoading');
+    const resultContainer = document.getElementById('customSqlResultContainer');
+    const btnExport = document.getElementById('btnExportCustomCsv');
+    const rowCountBadge = document.getElementById('customSqlRowCountBadge');
+    const timeBadge = document.getElementById('customSqlTimeBadge');
+    const thead = document.getElementById('customSqlTableHead');
+    const tbody = document.getElementById('customSqlTableBody');
+
+    errorDiv.style.display = 'none';
+    resultContainer.style.display = 'none';
+    btnExport.style.display = 'none';
+    loadingDiv.style.display = 'block';
+
+    fetch('{{ url_for("admin_api_sql") }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query })
+    })
+    .then(res => res.json())
+    .then(data => {
+        loadingDiv.style.display = 'none';
+        if (!data.success) {
+            errorDiv.style.display = 'block';
+            errorMsg.textContent = data.error;
+            return;
+        }
+
+        resultContainer.style.display = 'block';
+        btnExport.style.display = 'inline-block';
+        timeBadge.textContent = data.exec_time_ms + ' ms';
+        rowCountBadge.textContent = (data.row_count || 0) + ' แถว';
+
+        // Render Head
+        thead.innerHTML = '<th class="text-center" style="width: 45px;">#</th>';
+        (data.columns || []).forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col;
+            thead.appendChild(th);
+        });
+
+        // Render Body
+        tbody.innerHTML = '';
+        if (!data.rows || data.rows.length === 0) {
+            const colLen = (data.columns ? data.columns.length : 0) + 1;
+            tbody.innerHTML = `<tr><td colspan="${colLen}" class="text-center py-4 text-muted"><i class="bi bi-inbox d-block mb-1 fs-4 text-secondary"></i>ไม่พบข้อมูลที่ตรงกับเงื่อนไข (0 แถว)</td></tr>`;
+            return;
+        }
+
+        data.rows.forEach((row, idx) => {
+            const tr = document.createElement('tr');
+            let trHtml = `<td class="text-center text-muted small">${idx + 1}</td>`;
+            data.columns.forEach((col, cIdx) => {
+                const val = row[cIdx];
+                let cellContent = val;
+                if (val === null || val === undefined) {
+                    cellContent = '<span class="badge bg-light text-muted">NULL</span>';
+                } else if (typeof val === 'string' && (val.includes('.svg') || val.includes('.png') || val.includes('.jpg'))) {
+                    cellContent = `<a href="${val}" target="_blank" class="btn btn-outline-info btn-xs py-0 px-2 rounded-pill"><i class="bi bi-image me-1"></i>ดูสลิป</a>`;
+                } else if (col.toLowerCase().includes('status')) {
+                    if (val === 'CONFIRMED' || val === 'VERIFIED') {
+                        cellContent = `<span class="badge bg-success-subtle text-success">${val}</span>`;
+                    } else if (val === 'PENDING') {
+                        cellContent = `<span class="badge bg-warning-subtle text-warning">${val}</span>`;
+                    } else if (val === 'CANCELLED' || val === 'REJECTED') {
+                        cellContent = `<span class="badge bg-danger-subtle text-danger">${val}</span>`;
+                    } else {
+                        cellContent = `<span class="badge bg-secondary-subtle text-secondary">${val}</span>`;
+                    }
+                } else if (col.toLowerCase().includes('password')) {
+                    cellContent = '<span class="text-muted">••••••••</span>';
+                } else if (typeof val === 'number' && (col.includes('amount') || col.includes('price') || col.includes('revenue') || col.includes('total') || col.includes('sales'))) {
+                    cellContent = `<span class="fw-bold">${val.toFixed(2)}</span>`;
+                }
+                trHtml += `<td>${cellContent}</td>`;
+            });
+            tr.innerHTML = trHtml;
+            tbody.appendChild(tr);
+        });
+    })
+    .catch(err => {
+        loadingDiv.style.display = 'none';
+        errorDiv.style.display = 'block';
+        errorMsg.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์: ' + err.message;
+    });
+}
+
+function filterCustomSqlTable() {
+    const input = document.getElementById('customSqlFilterInput');
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById('customSqlResultTable');
+    const trs = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+    for (let i = 0; i < trs.length; i++) {
+        const text = trs[i].textContent || trs[i].innerText;
+        trs[i].style.display = text.toLowerCase().indexOf(filter) > -1 ? '' : 'none';
+    }
+}
+
+// Keyboard shortcut Ctrl + Enter for custom SQL
+document.addEventListener('DOMContentLoaded', function() {
+    const sqlTextarea = document.getElementById('customSqlQuery');
+    if (sqlTextarea) {
+        sqlTextarea.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                executeCustomSQL();
+            }
+        });
     }
 });
 </script>

@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 chcp 65001 > nul
 echo ===================================================
 echo   กำลังปิดการทำงานของเว็บเซิร์ฟเวอร์ (Port 5000)...
@@ -11,4 +11,4 @@ for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":5000" ^| findstr "LISTENING
 
 echo.
 echo เว็บเซิร์ฟเวอร์ถูกปิดเรียบร้อยแล้ว
-timeout /t 2 > nul
+ping 127.0.0.1 -n 3 > nul

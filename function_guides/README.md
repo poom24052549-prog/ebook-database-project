@@ -19,6 +19,7 @@
 | **07** | [`07_admin_orders_and_slip_verification.md`](07_admin_orders_and_slip_verification.md) | **ระบบหลังบ้าน: จัดการคำสั่งซื้อและตรวจสลิป** | กรองสถานะคำสั่งซื้อ, ตรวจสอบภาพสลิปจำลอง, อนุมัติยืนยัน (CONFIRMED) เพื่อเปิดสิทธิ์โหลด |
 | **08** | [`08_admin_user_roles.md`](08_admin_user_roles.md) | **ระบบหลังบ้าน: จัดการผู้ใช้และบทบาท (Roles)** | ดูรายชื่อสมาชิก ยอดซื้อสะสม, ปรับเปลี่ยนสิทธิ์ระหว่าง Customer และ Admin |
 | **09** | [`09_analytical_reports_and_export.md`](09_analytical_reports_and_export.md) | **รายงานวิเคราะห์ข้อมูลจริง 4 รายงาน & Export** | ยอดขายตามช่วงเวลา, E-Book ขายดี, ยอดขายตามหมวดหมู่, ลูกค้าชั้นยอด (HAVING), ส่งออก CSV |
+| **10** | [`10_admin_sql_query_console.md`](10_admin_sql_query_console.md) | **เครื่องมือรัน SQL ดึงข้อมูลจากตาราง (SQL Console)** | พิมพ์และรันคำสั่ง SQL ดึงข้อมูลจาก 11 ตาราง, สำรวจ Schema, โหลดคำสั่งยอดนิยม, ส่งออก CSV |
 
 ---
 

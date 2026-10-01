@@ -305,11 +305,11 @@ def init_database():
         
         if status == 'CONFIRMED':
             pay_status = 'VERIFIED'
-            slip_note = f'/static/uploads/slips/mock_slip_{random.randint(1, 5)}.png'
+            slip_note = f'/static/uploads/slips/mock_slip_{random.randint(1, 5)}.svg'
             admin_note = 'ตรวจสอบยอดเงินและสลิปการโอนเรียบร้อยแล้ว'
         elif status == 'PENDING':
             pay_status = 'PENDING'
-            slip_note = f'/static/uploads/slips/mock_slip_{random.randint(1, 5)}.png'
+            slip_note = f'/static/uploads/slips/mock_slip_{random.randint(1, 5)}.svg'
             admin_note = 'รอผู้ดูแลระบบตรวจสอบหลักฐานการชำระเงิน'
         else: # CANCELLED
             pay_status = 'REJECTED'

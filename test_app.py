@@ -93,5 +93,31 @@ class EbookStoreTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.mimetype, 'application/pdf')
 
+    def test_07_admin_sql_query_and_export(self):
+        # Login as Admin
+        self.client.post('/login', data={'username': 'admin', 'password': 'admin123'})
+
+        # GET /admin/sql
+        res_get = self.client.get('/admin/sql')
+        self.assertEqual(res_get.status_code, 200)
+        self.assertIn('เครื่องมือรัน SQL ดึงข้อมูลจากตาราง'.encode('utf-8'), res_get.data)
+
+        # POST custom query
+        res_post = self.client.post('/admin/sql', data={'query': 'SELECT * FROM categories ORDER BY category_id ASC;'})
+        self.assertEqual(res_post.status_code, 200)
+        self.assertIn('หมวดหมู่'.encode('utf-8'), res_post.data)
+
+        # Export SQL query result to CSV
+        res_export = self.client.post('/admin/sql/export', data={'query': 'SELECT * FROM categories;'})
+        self.assertEqual(res_export.status_code, 200)
+        self.assertEqual(res_export.mimetype, 'text/csv')
+
+        # Test API JSON query for interactive console in reports page
+        res_api = self.client.post('/admin/api/sql', json={'query': 'SELECT * FROM ebooks LIMIT 5;'})
+        self.assertEqual(res_api.status_code, 200)
+        data = res_api.get_json()
+        self.assertTrue(data['success'])
+        self.assertEqual(len(data['rows']), 5)
+
 if __name__ == '__main__':
     unittest.main()

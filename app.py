@@ -1,11 +1,12 @@
 import os
 import sqlite3
 import uuid
+import time
 from datetime import datetime
 from functools import wraps
 from flask import (
     Flask, render_template, request, redirect, url_for,
-    flash, session, send_from_directory, Response, abort
+    flash, session, send_from_directory, Response, abort, jsonify
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -451,7 +452,7 @@ def checkout():
 
         if not slip_path:
             # Default to simulated slip if user didn't upload
-            slip_path = f"/static/uploads/slips/mock_slip_1.png"
+            slip_path = f"/static/uploads/slips/mock_slip_1.svg"
 
         # Generate unique order number
         order_num = f"ORD-{datetime.now().strftime('%Y%m%d')}-{random_order_suffix()}"
@@ -1072,6 +1073,21 @@ def admin_reports():
         ORDER BY order_count DESC
     """).fetchall()
 
+    # Tables metadata for custom SQL runner inside reports page
+    tables_meta = []
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name ASC")
+    for r in cursor.fetchall():
+        t = r['name']
+        c_res = conn.execute(f"SELECT COUNT(*) as cnt FROM {t}").fetchone()
+        row_count = c_res['cnt'] if c_res else 0
+        cols_info = conn.execute(f"PRAGMA table_info({t})").fetchall()
+        tables_meta.append({
+            'name': t,
+            'count': row_count,
+            'columns': cols_info
+        })
+
     conn.close()
     return render_template(
         'admin/reports.html',
@@ -1080,7 +1096,8 @@ def admin_reports():
         report2_top_ebooks=report2_top_ebooks,
         report3_categories=report3_categories,
         report4_customers=report4_customers,
-        report4_status=report4_status
+        report4_status=report4_status,
+        tables_meta=tables_meta
     )
 
 # Export Reports to CSV
@@ -1160,6 +1177,163 @@ def export_report_csv(report_id):
         mimetype="text/csv; charset=utf-8",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+# -------------------------------------------------------------
+# Admin Direct SQL Query Console & Table Inspector
+# -------------------------------------------------------------
+@app.route('/admin/api/sql', methods=['POST'])
+@admin_required
+def admin_api_sql():
+    data = request.get_json(silent=True) or request.form
+    query = (data.get('query') or '').strip()
+    if not query:
+        return jsonify({'success': False, 'error': 'กรุณาระบุคำสั่ง SQL'})
+
+    conn = get_db()
+    start_time = time.time()
+    try:
+        res = conn.execute(query)
+        exec_time_ms = round((time.time() - start_time) * 1000, 2)
+        if res.description:
+            columns = [col[0] for col in res.description]
+            db_rows = res.fetchall()
+            rows = []
+            for r in db_rows:
+                rows.append([r[col] for col in columns])
+            conn.close()
+            return jsonify({
+                'success': True,
+                'is_select': True,
+                'columns': columns,
+                'rows': rows,
+                'row_count': len(rows),
+                'exec_time_ms': exec_time_ms
+            })
+        else:
+            row_count = res.rowcount
+            conn.commit()
+            conn.close()
+            return jsonify({
+                'success': True,
+                'is_select': False,
+                'row_count': row_count,
+                'exec_time_ms': exec_time_ms
+            })
+    except Exception as e:
+        conn.close()
+        exec_time_ms = round((time.time() - start_time) * 1000, 2)
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'exec_time_ms': exec_time_ms
+        })
+
+@app.route('/admin/sql', methods=['GET', 'POST'])
+@admin_required
+def admin_sql():
+    conn = get_db()
+    
+    # 1. Fetch metadata for all tables in database
+    tables_meta = []
+    cursor = conn.cursor()
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name ASC")
+    table_names = [r['name'] for r in cursor.fetchall()]
+    
+    for t in table_names:
+        c_res = conn.execute(f"SELECT COUNT(*) as cnt FROM {t}").fetchone()
+        row_count = c_res['cnt'] if c_res else 0
+        cols_info = conn.execute(f"PRAGMA table_info({t})").fetchall()
+        tables_meta.append({
+            'name': t,
+            'count': row_count,
+            'columns': cols_info
+        })
+
+    # 2. Determine query to execute
+    table_param = request.args.get('table')
+    default_query = "SELECT * FROM ebooks LIMIT 20;"
+    if table_param and table_param in table_names:
+        default_query = f"SELECT * FROM {table_param} LIMIT 50;"
+
+    query = request.form.get('query') or request.args.get('query') or default_query
+    query = query.strip()
+
+    columns = []
+    rows = []
+    error_message = None
+    exec_time_ms = 0.0
+    row_count = 0
+    is_select = True
+
+    if query:
+        start_time = time.time()
+        try:
+            res = conn.execute(query)
+            exec_time_ms = round((time.time() - start_time) * 1000, 2)
+            
+            if res.description:
+                columns = [col[0] for col in res.description]
+                rows = res.fetchall()
+                row_count = len(rows)
+            else:
+                is_select = False
+                row_count = res.rowcount
+                conn.commit()
+                flash(f'ดำเนินการคำสั่งเรียบร้อยแล้ว: มีผลกระทบ {row_count} แถว', 'success')
+        except Exception as e:
+            error_message = str(e)
+            exec_time_ms = round((time.time() - start_time) * 1000, 2)
+
+    conn.close()
+    return render_template(
+        'admin/sql_runner.html',
+        query=query,
+        columns=columns,
+        rows=rows,
+        error_message=error_message,
+        exec_time_ms=exec_time_ms,
+        row_count=row_count,
+        tables_meta=tables_meta,
+        is_select=is_select
+    )
+
+@app.route('/admin/sql/export', methods=['POST'])
+@admin_required
+def admin_sql_export():
+    query = request.form.get('query', '').strip()
+    if not query:
+        flash('กรุณาระบุคำสั่ง SQL สำหรับส่งออกข้อมูล', 'warning')
+        return redirect(url_for('admin_sql'))
+        
+    conn = get_db()
+    try:
+        res = conn.execute(query)
+        if not res.description:
+            conn.close()
+            flash('คำสั่ง SQL นี้ไม่มีชุดผลลัพธ์ข้อมูลสำหรับสร้าง CSV', 'warning')
+            return redirect(url_for('admin_sql', query=query))
+            
+        columns = [col[0] for col in res.description]
+        rows = res.fetchall()
+        conn.close()
+        
+        csv_rows = [columns]
+        for row in rows:
+            csv_rows.append([str(item) if item is not None else "" for item in row])
+            
+        filename = f"sql_query_result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        csv_content = "\ufeff" + "\n".join([",".join([f'"{str(c).replace(chr(34), chr(34)+chr(34))}"' for c in r]) for r in csv_rows])
+        return Response(
+            csv_content,
+            mimetype="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        conn.close()
+        flash(f'เกิดข้อผิดพลาดในการส่งออก CSV: {e}', 'danger')
+        return redirect(url_for('admin_sql', query=query))
+
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

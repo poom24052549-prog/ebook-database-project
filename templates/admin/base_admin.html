@@ -83,6 +83,13 @@
                                 <i class="bi bi-graph-up-arrow me-2 text-warning"></i> รายงานวิเคราะห์ 4 รายงาน
                             </a>
                         </li>
+
+                        <div class="text-uppercase small fw-bold px-3 py-2 mt-3 text-muted" style="letter-spacing: 1px;">เครื่องมือฐานข้อมูล</div>
+                        <li class="nav-item">
+                            <a class="nav-link {% if '/admin/sql' in request.path %}active{% endif %}" href="{{ url_for('admin_sql') }}">
+                                <i class="bi bi-terminal-split me-2 text-info"></i> รัน SQL ดึงข้อมูล
+                            </a>
+                        </li>
                     </ul>
 
                     <hr class="text-secondary my-4">

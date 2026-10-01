@@ -6,10 +6,17 @@ echo ===================================================================
 echo.
 echo กำลังตรวจสอบฐานข้อมูลและเตรียมระบบ...
 
-if not exist ebook_store.db (
-    echo กำลังสร้างฐานข้อมูลและข้อมูลตัวอย่าง (30+ คำสั่งซื้อ)...
-    python database/init_db.py
-    python create_sample_files.py
+if exist ebook_store.db goto db_ready
+echo กำลังสร้างฐานข้อมูลและข้อมูลตัวอย่าง 36 คำสั่งซื้อ...
+python database/init_db.py
+python create_sample_files.py
+:db_ready
+
+rem ตรวจสอบและติดตั้ง Flask อัตโนมัติหากยังไม่มี
+python -c "import flask" >nul 2>&1
+if %ERRORLEVEL% NEQ 0 (
+    echo กำลังติดตั้งไลบรารีที่จำเป็น (Flask)...
+    python -m pip install -r requirements.txt
 )
 
 echo.
@@ -24,4 +31,8 @@ echo   - บัญชี Customer: customer1 / user123
 echo ===================================================================
 echo.
 python app.py
+if %ERRORLEVEL% NEQ 0 (
+    echo.
+    echo [แจ้งเตือน] ไม่สามารถรัน Python ได้ กรุณาตรวจสอบว่าได้ติดตั้ง Python และเพิ่มใน PATH แล้ว
+)
 pause
