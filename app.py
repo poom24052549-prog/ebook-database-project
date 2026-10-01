@@ -85,7 +85,8 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session or session.get('role_name') != 'admin':
-            return render_template('403.html'), 403
+            flash('หน้านี้สำหรับผู้ดูแลระบบ (Admin) เท่านั้น', 'danger')
+            return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated_function
 
